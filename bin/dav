@@ -4,6 +4,8 @@ require 'uri'
 require 'rubygems'
 require 'net/dav'
 
+dav_user = ENV['DAVUSER']
+dav_pass = ENV['DAVPASS']
 cmd = $*[0]
 
 case cmd
@@ -18,7 +20,7 @@ else
 end
 
 res = Net::DAV.start(url) { |dav|
-  dav.credentials(ENV{'DAVUSER'}, ENV{'DAVPASS'});
+  dav.credentials(dav_user, dav_pass);
   case cmd
   when 'put'
     File.open(file, "r") do |stream|

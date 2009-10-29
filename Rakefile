@@ -5,9 +5,9 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "net_dav"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
-    gem.email = "c1.bio@niftybox.net"
+    gem.summary = %Q{WebDAV client library in the style of Net::HTTP}
+    gem.description = %Q{WebDAV client library in the style of Net::HTTP}
+    gem.email = "c1.github@niftybox.net"
     gem.homepage = "http://github.com/devrandom/net_dav"
     gem.authors = ["Miron Cuperman"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
