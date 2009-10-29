@@ -36,6 +36,15 @@ task :spec => :check_dependencies
 
 task :default => :spec
 
+task :release => [:clean, :gemspec, 'gemcutter:release']
+
+task :clean do
+  Dir.glob("**/*~").each do |file|
+    File.unlink file
+  end
+  puts "cleaned"
+end
+
 require 'rake/rdoctask'
 Rake::RDocTask.new do |rdoc|
   version = File.exist?('VERSION') ? File.read('VERSION') : ""
