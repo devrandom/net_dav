@@ -48,7 +48,7 @@ module Net #:nodoc:
     def initialize(uri)
       @uri = uri
       @uri = URI.parse(@uri) if @uri.is_a? String
-      case uri.scheme
+      case @uri.scheme
       when "http"
 	@http = Net::HTTP.new(@uri.host, @uri.port)
       when "https"
