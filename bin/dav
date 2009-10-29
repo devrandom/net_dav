@@ -20,7 +20,7 @@ else
 end
 
 res = Net::DAV.start(url) { |dav|
-  dav.credentials(dav_user, dav_pass);
+  dav.credentials(dav_user, dav_pass) if dav_user
   case cmd
   when 'put'
     File.open(file, "r") do |stream|

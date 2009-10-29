@@ -10,8 +10,8 @@ begin
     gem.email = "c1.github@niftybox.net"
     gem.homepage = "http://github.com/devrandom/net_dav"
     gem.authors = ["Miron Cuperman"]
-    gem.add_dependency "nokogiri", ">= 1.3.3"
-    gem.add_development_dependency "rspec", ">= 1.2.9"
+    gem.add_dependency "nokogiri", ">= 1.3.0"
+    gem.add_development_dependency "rspec", ">= 1.2.0"
 
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end

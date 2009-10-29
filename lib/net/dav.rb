@@ -4,15 +4,6 @@ require 'nokogiri'
 
 module Net #:nodoc:
   class DAV
-    # :stopdoc:
-    VERSION = '0.0.1'
-    # :startdoc:
-  
-    # Returns the library version string
-    def self.version
-      VERSION
-    end
-
     # Seconds to wait until reading one block (by one system call).
     # If the DAV object cannot read a block in this many seconds,
     # it raises a TimeoutError exception.
