@@ -1,8 +1,10 @@
 require 'net/https'
 require 'uri'
 require 'nokogiri'
+require 'net/dav/item'
 
 module Net #:nodoc:
+  # Implement a WebDAV client
   class DAV
     # Seconds to wait until reading one block (by one system call).
     # If the DAV object cannot read a block in this many seconds,
@@ -35,7 +37,7 @@ module Net #:nodoc:
     #
     #  res = Net::DAV.start(url) do |dav|
     #    dav.find(url.path) do |item|
-    #      puts item.inspect
+    #      puts "#{item.uri} is size #{item.size}"
     #    end
     #  end
     def self.start(uri, &block) # :yield: dav
@@ -52,6 +54,7 @@ module Net #:nodoc:
       when "http"
 	@http = Net::HTTP.new(@uri.host, @uri.port)
       when "https"
+	@http = Net::HTTPS.new(@uri.host, @uri.port)
       else
 	raise "unknown uri scheme"
       end
@@ -97,7 +100,7 @@ module Net #:nodoc:
     #
     #  res = Net::DAV.start(url) do |dav|
     #    dav.find(url.path, :recursive => true) do |item|
-    #      puts item.inspect
+    #      puts "#{item.type} #{item.uri}"
     #    end
     #  end
     def find(path, options = {})
@@ -106,16 +109,21 @@ module Net #:nodoc:
       path.sub!(/\/$/, '')
       doc./('.//x:response', namespaces).each do |item|
 	uri = @uri.merge(item.xpath("x:href", namespaces).inner_text)
-	next if uri.path == path || uri.path == path + "/"
-	res = {}
-	res[:uri] = uri
-	res[:size] = item.%(".//x:getcontentlength", namespaces).inner_text rescue nil
-	res[:type] = item.%(".//x:collection", namespaces) ? :directory : :file
-	yield res
-	if options[:recursive] && res[:type] == :directory
+	size = item.%(".//x:getcontentlength", namespaces).inner_text rescue nil
+	type = item.%(".//x:collection", namespaces) ? :directory : :file
+	res = Item.new(self, uri, type, size)
+	if type == :file
+	  yield res
+	elsif uri.path == path || uri.path == path + "/"
+	  # This is the top-level dir, skip it
+	elsif options[:recursive] && type == :directory
+	  yield res
+	  # This is a subdir, recurse
 	  find(uri.path, options) do |sub_res|
 	    yield sub_res
 	  end
+	else
+	  yield res
 	end
       end
     end
@@ -169,6 +177,25 @@ module Net #:nodoc:
       res.value
       res.body
     end
+
+    # Stores the content of a string to a URL
+    #
+    # Example:
+    #   dav.put(url.path, "hello world")
+    #
+    def put_string(path, str)
+      req = Net::HTTP::Put.new(path)
+      req.content_type = 'text/xml; charset="utf-8"'
+      req.body = str
+      #req['transfer-encoding'] = 'chunked'
+      if (@user)
+	req.basic_auth @user, @pass
+      end
+      res = @http.request(req)
+      res.value
+      res.body
+    end
+
 
     # Makes a new directory (collection)
     def mkdir(path)

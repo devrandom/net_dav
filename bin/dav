@@ -8,6 +8,23 @@ dav_user = ENV['DAVUSER']
 dav_pass = ENV['DAVPASS']
 cmd = $*[0]
 
+def print_usage
+  puts "usage: #{$0} COMMAND [ARGS]"
+  puts ""
+  puts "Available commands:"
+  puts "    ls         List file or directory at URL"
+  puts "    lsr        List file or directory recursively at URL"
+  puts "    get        Get file from URL to stdout or to FILE"
+  puts "    put        Put file from FILE to URL"
+  puts "    mkdir      Create directory at URL"
+  puts "    gsub       Replace content at URL from REGEXP to VALUE"
+  exit
+end
+
+if $*.size < 2
+  print_usage
+end
+
 case cmd
 when 'put'
   url = URI.parse $*[2]
@@ -40,15 +57,23 @@ res = Net::DAV.start(url) { |dav|
     end
   when 'lsr'
     dav.find(url.path, :recursive => true) do |item|
-      puts "#{item[:size]}\t#{item[:uri]}"
+      puts "#{item.size}\t#{item.uri}"
     end
   when 'ls'
     dav.find(url.path) do |item|
-      puts "#{item[:size]}\t#{item[:uri]}"
+      puts "#{item.size}\t#{item.uri}"
     end
   when 'mkdir'
     dav.mkdir(url.path)
+  when 'gsub'
+    re = Regexp.compile($*[2])
+    val = $*[3]
+    dav.find(url.path) do |item|
+      if (item.type == :file)
+	item.content = item.content.gsub(re, val)
+      end
+    end
   else
-    puts "unknown command"
+    print_usage
   end
 }
