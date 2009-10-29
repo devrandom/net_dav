@@ -1,7 +1,6 @@
 Net::Dav library, in the style of Net::HTTP
 
-Install
-=======
+== Install
 
 Installing the gem:
 
