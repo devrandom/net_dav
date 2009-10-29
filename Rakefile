@@ -36,7 +36,7 @@ task :spec => :check_dependencies
 
 task :default => :spec
 
-task :release => [:clean, :gemspec, 'gemcutter:release']
+task :dist => [:clean, :release]
 
 task :clean do
   Dir.glob("**/*~").each do |file|
