@@ -4,8 +4,19 @@ Net::Dav library, in the style of Net::HTTP
 
 Installing the gem:
 
-  sudo gem install net_dav
+  gem install net_dav
 
 If you're having install issues with nokogiri on Mac OS X read
 http://wiki.github.com/tenderlove/nokogiri/what-to-do-if-libxml2-is-being-a-jerk
 
+== Usage
+
+  Net::DAV.start("https://localhost.localdomain/xyz/") { |dav|
+    find('.', :recursive => true) do | item |
+       item.content = item.content.gsub(/silly/i, "funny")
+    end
+  end
+
+  (Note that if you want to use "." to refer to the origin URL, it should
+  end with a slash, otherwise it is assumed that the last component is a file
+  and "." will refer to the parent.)

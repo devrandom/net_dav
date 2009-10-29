@@ -94,13 +94,14 @@ module Net #:nodoc:
       Nokogiri::XML.parse(res.body)
     end
 
-    # Find files and directories
+    # Find files and directories, yields Net::DAV::Item
     #
     # Examples:
     #
     #  res = Net::DAV.start(url) do |dav|
     #    dav.find(url.path, :recursive => true) do |item|
     #      puts "#{item.type} #{item.uri}"
+    #      puts item.content
     #    end
     #  end
     def find(path, options = {})
