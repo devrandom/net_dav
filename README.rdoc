@@ -1,1 +1,12 @@
 Net::Dav library, in the style of Net::HTTP
+
+Install
+=======
+
+Installing the gem:
+
+  sudo gem install net_dav
+
+If you're having install issues with nokogiri on Mac OS X read
+http://wiki.github.com/tenderlove/nokogiri/what-to-do-if-libxml2-is-being-a-jerk
+
