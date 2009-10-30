@@ -18,7 +18,7 @@ module Net
 
       def initialize(dav, uri, type, size) #:nodoc:
 	@uri = uri
-	@size = size
+	@size = size.to_i rescue nil
 	@type = type
 	@dav = dav
       end
