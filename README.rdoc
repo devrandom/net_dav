@@ -6,6 +6,10 @@ Installing the gem:
 
   gem install net_dav
 
+and if you want acceleration for large files (from 4MB/s to 20MB/s in my setup):
+
+  gem install curb
+
 If you're having install issues with nokogiri on Mac OS X read
 http://wiki.github.com/tenderlove/nokogiri/what-to-do-if-libxml2-is-being-a-jerk
 
