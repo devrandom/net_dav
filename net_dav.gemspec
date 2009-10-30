@@ -10,9 +10,10 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Miron Cuperman"]
   s.date = %q{2009-10-30}
+  s.default_executable = %q{dav}
   s.description = %q{WebDAV client library in the style of Net::HTTP}
   s.email = %q{c1.github@niftybox.net}
-  s.executables = ["dav", "dav~"]
+  s.executables = ["dav"]
   s.extra_rdoc_files = [
     "LICENSE",
      "README.rdoc"
