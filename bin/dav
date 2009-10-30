@@ -36,7 +36,9 @@ else
   url = URI.parse $*[1]
 end
 
-res = Net::DAV.start(url) { |dav|
+enable_curl = !ENV['DISABLE_CURL']
+
+res = Net::DAV.start(url, :curl => enable_curl ) { |dav|
   dav.credentials(dav_user, dav_pass) if dav_user
   case cmd
   when 'put'

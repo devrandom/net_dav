@@ -2,20 +2,164 @@ require 'net/https'
 require 'uri'
 require 'nokogiri'
 require 'net/dav/item'
+require 'base64'
+begin
+  require 'curb'
+rescue LoadError
+end
 
 module Net #:nodoc:
   # Implement a WebDAV client
   class DAV
+    class NetHttpHandler
+      attr_writer :user, :pass
+
+      def initialize(uri)
+	@uri = uri
+	case @uri.scheme
+	when "http"
+	  @http = Net::HTTP.new(@uri.host, @uri.port)
+	when "https"
+	  @http = Net::HTTPS.new(@uri.host, @uri.port)
+	else
+	  raise "unknown uri scheme"
+	end
+      end
+
+      def start(&block)
+	@http.start(&block)
+      end
+
+      def read_timeout
+	@http.read_timeout
+      end
+
+      def read_timeout=(sec)
+	@http.read_timeout = sec
+      end
+
+      def open_timeout
+	@http.read_timeout
+      end
+
+      def open_timeout=(sec)
+	@http.read_timeout = sec
+      end
+
+      def request_sending_stream(verb, path, stream, length, headers)
+	req =
+	  case verb
+	  when :put
+	    Net::HTTP::Put.new(path)
+	  else
+	    raise "unkown sending_stream verb #{verb}"
+	  end
+	req.body_stream = stream
+	req.content_length = length
+	headers.each_pair { |key, value| req[key] = value } if headers
+	req.content_type = 'text/xml; charset="utf-8"'
+	if (@user)
+	  req.basic_auth @user, @pass
+	end
+	res = @http.request(req)
+	res.value # raises error if not success
+	res
+      end
+
+      def request_sending_body(verb, path, body, headers)
+	req =
+	  case verb
+	  when :put
+	    Net::HTTP::Put.new(path)
+	  else
+	    raise "unkown sending_body verb #{verb}"
+	  end
+	req.body = body
+	headers.each_pair { |key, value| req[key] = value } if headers
+	req.content_type = 'text/xml; charset="utf-8"'
+	if (@user)
+	  req.basic_auth @user, @pass
+	end
+	res = @http.request(req)
+	res.value # raises error if not success
+	res
+      end
+
+      def request_returning_body(verb, path, headers, &block)
+	req =
+	  case verb
+	  when :get
+	    Net::HTTP::Get.new(path)
+	  else
+	    raise "unkown returning_body verb #{verb}"
+	  end
+	headers.each_pair { |key, value| req[key] = value } if headers
+	if (@user)
+	  req.basic_auth @user, @pass
+	end
+	res = nil
+	@http.request(req) {|response|
+	  response.read_body nil, &block
+	  res = response
+	}
+	res.value # raises error if not success
+	res.body
+      end
+
+      def request(verb, path, body, headers)
+	req =
+	  case verb
+	  when :propfind
+	    Net::HTTP::Propfind.new(path)
+	  when :mkcol
+	    Net::HTTP::Mkcol.new(path)
+	  else
+	    raise "unkown verb #{verb}"
+	  end
+	req.body = body
+	headers.each_pair { |key, value| req[key] = value } if headers
+	req.content_type = 'text/xml; charset="utf-8"'
+	if (@user)
+	  req.basic_auth @user, @pass
+	end
+	res = @http.request(req)
+	res.value # raises error if not success
+	res
+      end
+    end
+
+    class CurlHandler < NetHttpHandler
+      def request_returning_body(verb, path, headers)
+	raise "unkown returning_body verb #{verb}" unless verb == :get
+	url = @uri.merge(path)
+	curl = Curl::Easy.new(url.to_s)
+	headers.each_pair { |key, value| curl.headers[key] = value } if headers
+	if (@user)
+	  curl.headers["Authorization"] = "Basic #{Base64.encode64("#{@user}:#{@pass}")}"
+	end
+	res = nil
+	if block_given?
+	  curl.on_body do |frag|
+	    yield frag
+	    frag.length
+	  end
+	end
+	curl.perform
+	curl.body_str
+      end
+
+    end
+
     # Seconds to wait until reading one block (by one system call).
     # If the DAV object cannot read a block in this many seconds,
     # it raises a TimeoutError exception.
     #
     def read_timeout
-      @http.read_timeout
+      @handler.read_timeout
     end
 
     def read_timeout=(sec)
-      @http.read_timeout = sec
+      @handler.read_timeout = sec
     end
 
     # Seconds to wait until connection is opened.
@@ -23,11 +167,11 @@ module Net #:nodoc:
     # it raises a TimeoutError exception.
     #
     def open_timeout
-      @http.read_timeout
+      @handler.read_timeout
     end
 
     def open_timeout=(sec)
-      @http.read_timeout = sec
+      @handler.read_timeout = sec
     end
 
     # Creates a new Net::DAV object and opens the connection
@@ -40,24 +184,23 @@ module Net #:nodoc:
     #      puts "#{item.uri} is size #{item.size}"
     #    end
     #  end
-    def self.start(uri, &block) # :yield: dav
-      new(uri).start(&block)
+    def self.start(uri, options = nil, &block) # :yield: dav
+      new(uri, options).start(&block)
     end
 
     # Creates a new Net::DAV object for the specified host
     # The path part of the URI is used to handle relative URLs
     # in subsequent requests.
-    def initialize(uri)
+    # You can pass :curl => false if you want to disable use
+    # of the curb (libcurl) gem if present for acceleration
+    def initialize(uri, options = nil)
+      @have_curl = Curl rescue nil
+      if options && options.has_key?(:curl) && !options[:curl]
+	@have_curl = false
+      end
       @uri = uri
       @uri = URI.parse(@uri) if @uri.is_a? String
-      case @uri.scheme
-      when "http"
-	@http = Net::HTTP.new(@uri.host, @uri.port)
-      when "https"
-	@http = Net::HTTPS.new(@uri.host, @uri.port)
-      else
-	raise "unknown uri scheme"
-      end
+      @handler = @have_curl ? CurlHandler.new(@uri) : NetHttpHandler.new(@uri)
     end
 
     # Opens the connection to the host.  Yields self to the block.
@@ -69,28 +212,22 @@ module Net #:nodoc:
     #      puts item.inspect
     #    end
     #  end
-    def start # :yield: dav
-      @http.start do |http|
+    def start(&block) # :yield: dav
+      @handler.start do
 	return yield(self)
       end
     end
 
     # Set credentials for basic authentication
     def credentials(user, pass)
-      @user = user
-      @pass = pass
+      @handler.user = user
+      @handler.pass = pass
     end
 
     def propfind(path) #:nodoc:
-      req = Net::HTTP::Propfind.new(path)
-      req.body = '<?xml version="1.0" encoding="utf-8"?><DAV:propfind xmlns:DAV="DAV:"><DAV:allprop/></DAV:propfind>'
-      req['Depth'] = '1'
-      req.content_type = 'text/xml; charset="utf-8"'
-      if (@user)
-	req.basic_auth @user, @pass
-      end
-      res = @http.request(req)
-      res.value # raises error if not success
+      headers = {'Depth' => '1'}
+      body = '<?xml version="1.0" encoding="utf-8"?><DAV:propfind xmlns:DAV="DAV:"><DAV:allprop/></DAV:propfind>'
+      res = @handler.request(:propfind, path, body, headers)
       Nokogiri::XML.parse(res.body)
     end
 
@@ -146,17 +283,8 @@ module Net #:nodoc:
     # object will *not* contain a (meaningful) body.
 
     def get(path, &block)
-      req = Net::HTTP::Get.new(path)
-      req.content_type = 'text/xml; charset="utf-8"'
-      if (@user)
-	req.basic_auth @user, @pass
-      end
-      res = nil
-      @http.request(req) {|response|
-	response.read_body nil, &block
-	res = response
-      }
-      res.body
+      @handler.request_returning_body(:get, path, nil, &block)
+      true
     end
 
     # Stores the content of a stream to a URL
@@ -166,16 +294,7 @@ module Net #:nodoc:
     #   dav.put(url.path, stream, File.size(file))
     # end
     def put(path, stream, length)
-      req = Net::HTTP::Put.new(path)
-      req.content_type = 'text/xml; charset="utf-8"'
-      req.content_length = length
-      req.body_stream = stream
-      #req['transfer-encoding'] = 'chunked'
-      if (@user)
-	req.basic_auth @user, @pass
-      end
-      res = @http.request(req)
-      res.value
+      res = @handler.request_sending_stream(:put, path, stream, length, nil)
       res.body
     end
 
@@ -185,28 +304,14 @@ module Net #:nodoc:
     #   dav.put(url.path, "hello world")
     #
     def put_string(path, str)
-      req = Net::HTTP::Put.new(path)
-      req.content_type = 'text/xml; charset="utf-8"'
-      req.body = str
-      #req['transfer-encoding'] = 'chunked'
-      if (@user)
-	req.basic_auth @user, @pass
-      end
-      res = @http.request(req)
-      res.value
+      res = @handler.request_sending_body(:put, path, str, nil)
       res.body
     end
 
 
     # Makes a new directory (collection)
     def mkdir(path)
-      req = Net::HTTP::Mkcol.new(path)
-      req.content_type = 'text/xml; charset="utf-8"'
-      if (@user)
-	req.basic_auth @user, @pass
-      end
-      res = @http.request(req)
-      res.value
+      res = @handler.request(:mkcol, path, nil, nil)
       res.body
     end
 
