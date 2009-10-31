@@ -11,6 +11,7 @@ end
 module Net #:nodoc:
   # Implement a WebDAV client
   class DAV
+    MAX_REDIRECTS = 10
     class NetHttpHandler
       attr_writer :user, :pass
 
@@ -61,8 +62,7 @@ module Net #:nodoc:
 	if (@user)
 	  req.basic_auth @user, @pass
 	end
-	res = @http.request(req)
-	res.value # raises error if not success
+	res = handle_request(req, headers)
 	res
       end
 
@@ -80,8 +80,7 @@ module Net #:nodoc:
 	if (@user)
 	  req.basic_auth @user, @pass
 	end
-	res = @http.request(req)
-	res.value # raises error if not success
+	res = handle_request(req, headers)
 	res
       end
 
@@ -97,12 +96,7 @@ module Net #:nodoc:
 	if (@user)
 	  req.basic_auth @user, @pass
 	end
-	res = nil
-	@http.request(req) {|response|
-	  response.read_body nil, &block
-	  res = response
-	}
-	res.value # raises error if not success
+	res = handle_request(req, headers, MAX_REDIRECTS, &block)
 	res.body
       end
 
@@ -122,20 +116,68 @@ module Net #:nodoc:
 	if (@user)
 	  req.basic_auth @user, @pass
 	end
-	res = @http.request(req)
-	res.value # raises error if not success
+	res = handle_request(req, headers)
 	res
+      end
+
+      def handle_request(req, headers, limit = MAX_REDIRECTS, &block)
+	# You should choose better exception. 
+	raise ArgumentError, 'HTTP redirect too deep' if limit == 0
+
+	response = nil
+	if block
+	  @http.request(req) {|res|
+	    res.read_body nil, &block
+	    response = res
+	  }
+	else
+	  response = @http.request(req)
+	end
+	case response
+	when Net::HTTPSuccess     then response
+	when Net::HTTPRedirection then
+	  location = URI.parse(response['location'])
+	  if (@uri.scheme != location.scheme ||
+	      @uri.host != location.host ||
+	      @uri.port != location.port)
+	    raise "cannot redirect to a different host #{@uri} => #{location}"
+	  end
+	  new_req = req.class.new(location.path)
+	  new_req.body = req.body
+	  new_req.body_stream = req.body_stream
+	  headers.each_pair { |key, value| new_req[key] = value } if headers
+	  if (@user)
+	    new_req.basic_auth @user, @pass
+	  end
+	  handle_request(new_req, limit - 1, &block)
+	else
+	  response.error!
+	end
       end
     end
 
+
     class CurlHandler < NetHttpHandler
+      def make_curl
+	unless @curl
+	  @curl = Curl::Easy.new
+	  @curl.timeout = @http.read_timeout
+	  @curl.follow_location = true
+	  @curl.max_redirects = MAX_REDIRECTS
+	end
+	@curl
+      end
+
       def request_returning_body(verb, path, headers)
 	raise "unkown returning_body verb #{verb}" unless verb == :get
 	url = @uri.merge(path)
-	curl = Curl::Easy.new(url.to_s)
+	curl = make_curl
+	curl.url = url.to_s
 	headers.each_pair { |key, value| curl.headers[key] = value } if headers
 	if (@user)
-	  curl.headers["Authorization"] = "Basic #{Base64.encode64("#{@user}:#{@pass}")}"
+	  curl.userpwd = "#{@user}:#{@pass}"
+	else
+	  curl.userpwd = nil
 	end
 	res = nil
 	if block_given?
@@ -283,8 +325,8 @@ module Net #:nodoc:
     # object will *not* contain a (meaningful) body.
 
     def get(path, &block)
-      @handler.request_returning_body(:get, path, nil, &block)
-      true
+      body = @handler.request_returning_body(:get, path, nil, &block)
+      body
     end
 
     # Stores the content of a stream to a URL

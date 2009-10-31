@@ -21,6 +21,19 @@ http://wiki.github.com/tenderlove/nokogiri/what-to-do-if-libxml2-is-being-a-jerk
     end
   end
 
-  (Note that if you want to use "." to refer to the origin URL, it should
-  end with a slash, otherwise it is assumed that the last component is a file
-  and "." will refer to the parent.)
+(Note that if you want to use "." to refer to the origin URL, it should
+end with a slash, otherwise it is assumed that the last component is a file
+and "." will refer to the parent.)
+
+== Performance
+
+This should be threadsafe if you use a different Net::DAV object
+for each thread.
+Check out script/multi-test for a multi-threaded application.
+
+Installing the +curb+ gem will gain speedup with large files, but currently
+is much slower doing many small +get+ operations. If your usecase is the
+latter and you have +curb+ installed, you can disable its use by passing the 
+ :curl => false
+option to Net::DAV::start or Net::DAV::new .
+
