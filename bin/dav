@@ -36,9 +36,21 @@ else
   url = URI.parse $*[1]
 end
 
-enable_curl = !ENV['DISABLE_CURL']
+enable_curl = !(ENV['DISABLE_CURL'] && ENV['DISABLE_CURL'] != "0")
 
-res = Net::DAV.start(url, :curl => enable_curl ) { |dav|
+dav = Net::DAV.new(url, :curl => enable_curl)
+
+if (url.scheme == 'https')
+  dav.verify_callback = lambda do |preverify_ok, x509_store|
+    puts "preverify = #{preverify_ok}" if $DEBUG
+    puts "cert = #{x509_store.current_cert.inspect}" if $DEBUG
+    preverify_ok
+  end
+
+  dav.verify_server = false
+end
+
+res = dav.start { |dav|
   dav.credentials(dav_user, dav_pass) if dav_user
   case cmd
   when 'put'

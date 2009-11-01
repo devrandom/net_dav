@@ -15,13 +15,23 @@ module Net #:nodoc:
     class NetHttpHandler
       attr_writer :user, :pass
 
+      def verify_callback=(callback)
+	@http.verify_callback = callback
+      end
+
+      def verify_server=(value)
+	@http.verify_mode = value ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
+      end
+
       def initialize(uri)
 	@uri = uri
 	case @uri.scheme
 	when "http"
 	  @http = Net::HTTP.new(@uri.host, @uri.port)
 	when "https"
-	  @http = Net::HTTPS.new(@uri.host, @uri.port)
+	  @http = Net::HTTP.new(@uri.host, @uri.port)
+	  @http.use_ssl = true
+	  self.verify_server = true
 	else
 	  raise "unknown uri scheme"
 	end
@@ -158,6 +168,19 @@ module Net #:nodoc:
 
 
     class CurlHandler < NetHttpHandler
+      def verify_callback=(callback)
+	super
+	curl = make_curl
+	$stderr.puts "verify_callback not implemented in Curl::Easy"
+      end
+
+      def verify_server=(value)
+	super
+	curl = make_curl
+	curl.ssl_verify_peer = value
+	curl.ssl_verify_host = value
+      end
+
       def make_curl
 	unless @curl
 	  @curl = Curl::Easy.new
@@ -355,6 +378,14 @@ module Net #:nodoc:
     def mkdir(path)
       res = @handler.request(:mkcol, path, nil, nil)
       res.body
+    end
+
+    def verify_callback=(callback)
+      @handler.verify_callback = callback
+    end
+
+    def verify_server=(value)
+      @handler.verify_server = value
     end
 
   end
