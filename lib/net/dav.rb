@@ -3,6 +3,7 @@ require 'uri'
 require 'nokogiri'
 require 'net/dav/item'
 require 'base64'
+require 'digest/md5'
 begin
   require 'curb'
 rescue LoadError
@@ -15,6 +16,8 @@ module Net #:nodoc:
     class NetHttpHandler
       attr_writer :user, :pass
 
+      attr_accessor :disable_basic_auth
+
       def verify_callback=(callback)
 	@http.verify_callback = callback
       end
@@ -24,6 +27,7 @@ module Net #:nodoc:
       end
 
       def initialize(uri)
+	@disable_basic_auth = false
 	@uri = uri
 	case @uri.scheme
 	when "http"
@@ -69,9 +73,6 @@ module Net #:nodoc:
 	req.content_length = length
 	headers.each_pair { |key, value| req[key] = value } if headers
 	req.content_type = 'text/xml; charset="utf-8"'
-	if (@user)
-	  req.basic_auth @user, @pass
-	end
 	res = handle_request(req, headers)
 	res
       end
@@ -87,9 +88,6 @@ module Net #:nodoc:
 	req.body = body
 	headers.each_pair { |key, value| req[key] = value } if headers
 	req.content_type = 'text/xml; charset="utf-8"'
-	if (@user)
-	  req.basic_auth @user, @pass
-	end
 	res = handle_request(req, headers)
 	res
       end
@@ -103,9 +101,6 @@ module Net #:nodoc:
 	    raise "unkown returning_body verb #{verb}"
 	  end
 	headers.each_pair { |key, value| req[key] = value } if headers
-	if (@user)
-	  req.basic_auth @user, @pass
-	end
 	res = handle_request(req, headers, MAX_REDIRECTS, &block)
 	res.body
       end
@@ -123,9 +118,6 @@ module Net #:nodoc:
 	req.body = body
 	headers.each_pair { |key, value| req[key] = value } if headers
 	req.content_type = 'text/xml; charset="utf-8"'
-	if (@user)
-	  req.basic_auth @user, @pass
-	end
 	res = handle_request(req, headers)
 	res
       end
@@ -144,7 +136,21 @@ module Net #:nodoc:
 	  response = @http.request(req)
 	end
 	case response
-	when Net::HTTPSuccess     then response
+	when Net::HTTPSuccess     then
+	  return response
+	when Net::HTTPUnauthorized     then
+	  response.error! unless @user
+	  response.error! if req['authorization']
+	  new_req = clone_req(req.path, req, headers)
+	  if response['www-authenticate'] =~ /^Basic/
+	    if disable_basic_auth
+	      raise "server requested basic auth, but that is disabled"
+	    end
+	    new_req.basic_auth @user, @pass
+	  else
+	    digest_auth(new_req, @user, @pass, response)
+	  end
+	  return handle_request(new_req, headers, limit - 1, &block)
 	when Net::HTTPRedirection then
 	  location = URI.parse(response['location'])
 	  if (@uri.scheme != location.scheme ||
@@ -152,17 +158,55 @@ module Net #:nodoc:
 	      @uri.port != location.port)
 	    raise "cannot redirect to a different host #{@uri} => #{location}"
 	  end
-	  new_req = req.class.new(location.path)
-	  new_req.body = req.body
-	  new_req.body_stream = req.body_stream
-	  headers.each_pair { |key, value| new_req[key] = value } if headers
-	  if (@user)
-	    new_req.basic_auth @user, @pass
-	  end
-	  handle_request(new_req, limit - 1, &block)
+	  new_req = clone_req(location.path, req, headers)
+	  return handle_request(new_req, headers, limit - 1, &block)
 	else
 	  response.error!
 	end
+      end
+      def clone_req(path, req, headers)
+	new_req = req.class.new(path)
+	new_req.body = req.body
+	new_req.body_stream = req.body_stream
+	headers.each_pair { |key, value| new_req[key] = value } if headers
+	return new_req
+      end
+
+      CNONCE = Digest::MD5.hexdigest("%x" % (Time.now.to_i + rand(65535))).slice(0, 8)
+
+      def digest_auth(request, user, password, response)
+	# based on http://segment7.net/projects/ruby/snippets/digest_auth.rb
+	@nonce_count = 0 if @nonce_count.nil?
+	@nonce_count += 1
+
+	raise "bad www-authenticate header" unless (response['www-authenticate'] =~ /^(\w+) (.*)/)
+
+	params = {}
+	$2.gsub(/(\w+)="(.*?)"/) { params[$1] = $2 }
+
+	a_1 = "#{user}:#{params['realm']}:#{password}"
+	a_2 = "#{request.method}:#{request.path}"
+	request_digest = ''
+	request_digest << Digest::MD5.hexdigest(a_1)
+	request_digest << ':' << params['nonce']
+	request_digest << ':' << ('%08x' % @nonce_count)
+	request_digest << ':' << CNONCE
+	request_digest << ':' << params['qop']
+	request_digest << ':' << Digest::MD5.hexdigest(a_2)
+
+	header = []
+	header << "Digest username=\"#{user}\""
+	header << "realm=\"#{params['realm']}\""
+	header << "nonce=\"#{params['nonce']}\""
+	header << "uri=\"#{request.path}\""
+	header << "cnonce=\"#{CNONCE}\""
+	header << "nc=#{'%08x' % @nonce_count}"
+	header << "qop=#{params['qop']}"
+	header << "response=\"#{Digest::MD5.hexdigest(request_digest)}\""
+	header << "algorithm=\"MD5\""
+
+	header = header.join(', ')
+	request['Authorization'] = header
       end
     end
 
@@ -187,6 +231,9 @@ module Net #:nodoc:
 	  @curl.timeout = @http.read_timeout
 	  @curl.follow_location = true
 	  @curl.max_redirects = MAX_REDIRECTS
+	  if disable_basic_auth
+	    @curl.http_auth_types = Curl::CURLAUTH_DIGEST
+	  end
 	end
 	@curl
       end
@@ -210,9 +257,23 @@ module Net #:nodoc:
 	  end
 	end
 	curl.perform
+	unless curl.response_code >= 200 && curl.response_code < 300
+	  headers = curl.header_str.split(/\r?\n/)
+	  raise Exception.new("Curl response #{headers[0]}")
+	end
 	curl.body_str
       end
 
+    end
+
+    # Disable basic auth - to protect passwords from going in the clear
+    # through a man-in-the-middle attack.
+    def disable_basic_auth?
+      @handler.disable_basic_auth
+    end
+
+    def disable_basic_auth=(value)
+      @handler.disable_basic_auth = value
     end
 
     # Seconds to wait until reading one block (by one system call).

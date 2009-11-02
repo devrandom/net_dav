@@ -6,6 +6,9 @@ require 'net/dav'
 
 dav_user = ENV['DAVUSER']
 dav_pass = ENV['DAVPASS']
+disable_basic_auth = (ENV['DISABLE_BASIC_AUTH'] && ENV['DISABLE_BASIC_AUTH'] != "0")
+enable_curl = !(ENV['DISABLE_CURL'] && ENV['DISABLE_CURL'] != "0")
+
 cmd = $*[0]
 
 def print_usage
@@ -36,9 +39,8 @@ else
   url = URI.parse $*[1]
 end
 
-enable_curl = !(ENV['DISABLE_CURL'] && ENV['DISABLE_CURL'] != "0")
-
 dav = Net::DAV.new(url, :curl => enable_curl)
+dav.disable_basic_auth = disable_basic_auth
 
 if (url.scheme == 'https')
   dav.verify_callback = lambda do |preverify_ok, x509_store|
