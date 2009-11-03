@@ -36,7 +36,11 @@ task :spec => :check_dependencies
 
 task :default => :spec
 
-task :dist => [:clean, :release]
+task "dist" => [:clean, :release]
+
+task "dist:patch" => [:clean, "version:bump:patch", :release]
+
+task "dist:minor" => [:clean, "version:bump:minor", :release]
 
 task :clean do
   Dir.glob("**/*~").each do |file|
