@@ -129,7 +129,8 @@ module Net #:nodoc:
 	response = nil
 	if block
 	  @http.request(req) {|res|
-	    res.read_body nil, &block
+	    # Only start returning a body if we will not retry
+	    res.read_body nil, &block if !res.is_a?(Net::HTTPUnauthorized) && !res.is_a?(Net::HTTPRedirection)
 	    response = res
 	  }
 	else
@@ -156,7 +157,7 @@ module Net #:nodoc:
 	  if (@uri.scheme != location.scheme ||
 	      @uri.host != location.host ||
 	      @uri.port != location.port)
-	    raise "cannot redirect to a different host #{@uri} => #{location}"
+	    raise ArgumentError, "cannot redirect to a different host #{@uri} => #{location}"
 	  end
 	  new_req = clone_req(location.path, req, headers)
 	  return handle_request(new_req, headers, limit - 1, &block)
