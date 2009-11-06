@@ -259,8 +259,10 @@ module Net #:nodoc:
 	end
 	curl.perform
 	unless curl.response_code >= 200 && curl.response_code < 300
-	  headers = curl.header_str.split(/\r?\n/)
-	  raise Exception.new("Curl response #{headers[0]}")
+	  header_block = curl.header_str.split(/\r?\n\r?\n/)[-1]
+	  msg = header_block.split(/\r?\n/)[0]
+	  msg.gsub!(/^HTTP\/\d+.\d+ /, '')
+	  raise Net::HTTPError.new(msg, nil)
 	end
 	curl.body_str
       end
