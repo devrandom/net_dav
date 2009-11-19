@@ -371,6 +371,7 @@ module Net #:nodoc:
     #    end
     #  end
     def find(path, options = {})
+      path = @uri.merge(path).path
       namespaces = {'x' => "DAV:"}
       doc = propfind(path)
       path.sub!(/\/$/, '')
@@ -412,6 +413,7 @@ module Net #:nodoc:
     # object will *not* contain a (meaningful) body.
 
     def get(path, &block)
+      path = @uri.merge(path).path
       body = @handler.request_returning_body(:get, path, nil, &block)
       body
     end
@@ -423,6 +425,7 @@ module Net #:nodoc:
     #   dav.put(url.path, stream, File.size(file))
     # end
     def put(path, stream, length)
+      path = @uri.merge(path).path
       res = @handler.request_sending_stream(:put, path, stream, length, nil)
       res.body
     end
@@ -433,6 +436,7 @@ module Net #:nodoc:
     #   dav.put(url.path, "hello world")
     #
     def put_string(path, str)
+      path = @uri.merge(path).path
       res = @handler.request_sending_body(:put, path, str, nil)
       res.body
     end
@@ -440,6 +444,7 @@ module Net #:nodoc:
 
     # Makes a new directory (collection)
     def mkdir(path)
+      path = @uri.merge(path).path
       res = @handler.request(:mkcol, path, nil, nil)
       res.body
     end

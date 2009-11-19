@@ -6,7 +6,7 @@ begin
   Jeweler::Tasks.new do |gem|
     gem.name = "net_dav"
     gem.summary = %Q{WebDAV client library in the style of Net::HTTP}
-    gem.description = %Q{WebDAV client library in the style of Net::HTTP}
+    gem.description = %Q{WebDAV client library in the style of Net::HTTP, using Net::HTTP and libcurl, if installed}
     gem.email = "c1.github@niftybox.net"
     gem.homepage = "http://github.com/devrandom/net_dav"
     gem.authors = ["Miron Cuperman"]
@@ -36,11 +36,18 @@ task :spec => :check_dependencies
 
 task :default => :spec
 
-task "dist" => [:clean, :release]
+desc "release with no version change"
+task :dist => [:clean, :release]
 
-task "dist:patch" => [:clean, "version:bump:patch", :release]
+namespace :dist do
+  desc "release patch"
+  task :patch => [:clean, "version:bump:patch", :release]
+  desc "release with minor version bump"
+  task :minor => [:clean, "version:bump:minor", :release]
+end
 
-task "dist:minor" => [:clean, "version:bump:minor", :release]
+desc "build gem into pkg directory"
+task :gem => [:build]
 
 task :clean do
   Dir.glob("**/*~").each do |file|
