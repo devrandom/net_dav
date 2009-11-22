@@ -20,11 +20,11 @@ describe "Net::Dav" do
     Net::DAV.new("http://localhost.localdomain/").should_not be_nil
   end
 
-   it "should read properties from webdav server" do
-     dav = Net::DAV.new("http://localhost:10080/")
-     @props = dav.propfind("/").to_s
-     @props.should match(/200 OK/)
-   end
+  it "should read properties from webdav server" do
+    dav = Net::DAV.new("http://localhost:10080/")
+    @props = dav.propfind("/").to_s
+    @props.should match(/200 OK/)
+  end
 
   after(:all) do
     # this is run once and only once after all of the examples
