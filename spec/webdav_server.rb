@@ -65,10 +65,13 @@ def webdav_server(*options)
   log = WEBrick::Log.new
   log.level = WEBrick::Log::DEBUG if $DEBUG
   serv = WEBrick::HTTPServer.new({:Port => port, :Logger => log})
+
+
+  dir = Dir.pwd + '/spec/fixtures'
   if(options and options[0][:authentication])
-    serv.mount("/", WEBrick::HTTPServlet::WebDAVHandlerVersion3, ARGV[0] || Dir.pwd)
+    serv.mount("/", WEBrick::HTTPServlet::WebDAVHandlerVersion3, dir)
   else
-    serv.mount("/", WEBrick::HTTPServlet::WebDAVHandlerVersion2, ARGV[0] || Dir.pwd)
+    serv.mount("/", WEBrick::HTTPServlet::WebDAVHandlerVersion2, dir)
   end
 
 
