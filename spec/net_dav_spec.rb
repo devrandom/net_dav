@@ -2,12 +2,7 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe "Net::Dav" do
 
-  serverpid = nil
-
   before(:all) do
-    # This is run once and only once, before all of the examples
-    # and before any before(:each) blocks.
-
     # Start webdav server in subprocess
     @pid = fork do
       webdav_server(:port => 10080,:authentication => false)
@@ -26,9 +21,31 @@ describe "Net::Dav" do
     @props.should match(/200 OK/)
   end
 
+  it "should write files to webdav server" do
+    dav = Net::DAV.new("http://localhost:10080/")
+    @props = find_props_or_error(dav, "/new_file.html")
+    @props.should match(/404.*Not found/i)
+
+    dav.put_string("/new_file.html","File contents")
+
+    @props = find_props_or_error(dav, "/new_file.html")
+    @props.should match(/200 OK/i)
+  end
+
+  it "should delete files from webdav server" do
+    dav = Net::DAV.new("http://localhost:10080/")
+
+    @props = find_props_or_error(dav, "/new_file.html")
+    @props.should match(/200 OK/i)
+    puts "DEBUG delete spec"
+
+    dav.delete("/new_file.html")
+    @props = find_props_or_error(dav, "/new_file.html")
+    @props.should match(/404.*Not found/i)
+  end
+
   after(:all) do
-    # this is run once and only once after all of the examples
-    # and after any after(:each) blocks
+    # Shut down webdav server
     Process.kill('SIGKILL', @pid) rescue nil
   end
 
