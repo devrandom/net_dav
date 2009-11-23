@@ -486,7 +486,6 @@ module Net #:nodoc:
           '</d:prop>' +
         '</d:set>' +
       '</d:propertyupdate>'
-      # body = '<?xml version="1.0" encoding="utf-8"?><DAV:propfind xmlns:DAV="DAV:"><DAV:allprop/></DAV:propfind>'
       res = @handler.request(:proppatch, path, body, headers)
       Nokogiri::XML.parse(res.body)
     end
