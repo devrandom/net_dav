@@ -118,6 +118,8 @@ module Net #:nodoc:
             Net::HTTP::Move.new(path)
           when :copy
             Net::HTTP::Copy.new(path)
+          when :proppatch
+            Net::HTTP::Proppatch.new(path)
           else
             raise "unkown verb #{verb}"
           end
@@ -473,6 +475,21 @@ module Net #:nodoc:
       res.body
     end
 
+    # Proppatch request
+    def proppatch(path, xml_snippet)
+      headers = {'Depth' => '1'}
+      body =  '<?xml version="1.0"?>' +
+      '<d:propertyupdate xmlns:d="DAV:" xmlns:v="vrtx">' +
+      '<d:set>' +
+          '<d:prop>' +
+            xml_snippet +
+          '</d:prop>' +
+        '</d:set>' +
+      '</d:propertyupdate>'
+      # body = '<?xml version="1.0" encoding="utf-8"?><DAV:propfind xmlns:DAV="DAV:"><DAV:allprop/></DAV:propfind>'
+      res = @handler.request(:proppatch, path, body, headers)
+      Nokogiri::XML.parse(res.body)
+    end
 
     # Makes a new directory (collection)
     def mkdir(path)
