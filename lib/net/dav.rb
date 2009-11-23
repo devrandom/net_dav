@@ -19,252 +19,261 @@ module Net #:nodoc:
       attr_accessor :disable_basic_auth
 
       def verify_callback=(callback)
-	@http.verify_callback = callback
+        @http.verify_callback = callback
       end
 
       def verify_server=(value)
-	@http.verify_mode = value ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
+        @http.verify_mode = value ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
       end
 
       def initialize(uri)
-	@disable_basic_auth = false
-	@uri = uri
-	case @uri.scheme
-	when "http"
-	  @http = Net::HTTP.new(@uri.host, @uri.port)
-	when "https"
-	  @http = Net::HTTP.new(@uri.host, @uri.port)
-	  @http.use_ssl = true
-	  self.verify_server = true
-	else
-	  raise "unknown uri scheme"
-	end
+        @disable_basic_auth = false
+        @uri = uri
+        case @uri.scheme
+        when "http"
+          @http = Net::HTTP.new(@uri.host, @uri.port)
+        when "https"
+          @http = Net::HTTP.new(@uri.host, @uri.port)
+          @http.use_ssl = true
+          self.verify_server = true
+        else
+          raise "unknown uri scheme"
+        end
       end
 
       def start(&block)
-	@http.start(&block)
+        @http.start(&block)
       end
 
       def read_timeout
-	@http.read_timeout
+        @http.read_timeout
       end
 
       def read_timeout=(sec)
-	@http.read_timeout = sec
+        @http.read_timeout = sec
       end
 
       def open_timeout
-	@http.read_timeout
+        @http.read_timeout
       end
 
       def open_timeout=(sec)
-	@http.read_timeout = sec
+        @http.read_timeout = sec
       end
 
       def request_sending_stream(verb, path, stream, length, headers)
-	req =
-	  case verb
-	  when :put
-	    Net::HTTP::Put.new(path)
-	  else
-	    raise "unkown sending_stream verb #{verb}"
-	  end
-	req.body_stream = stream
-	req.content_length = length
-	headers.each_pair { |key, value| req[key] = value } if headers
-	req.content_type = 'text/xml; charset="utf-8"'
-	res = handle_request(req, headers)
-	res
+        req =
+          case verb
+          when :put
+            Net::HTTP::Put.new(path)
+          else
+            raise "unkown sending_stream verb #{verb}"
+          end
+        req.body_stream = stream
+        req.content_length = length
+        headers.each_pair { |key, value| req[key] = value } if headers
+        req.content_type = 'text/xml; charset="utf-8"'
+        res = handle_request(req, headers)
+        res
       end
 
       def request_sending_body(verb, path, body, headers)
-	req =
-	  case verb
-	  when :put
-	    Net::HTTP::Put.new(path)
-	  else
-	    raise "unkown sending_body verb #{verb}"
-	  end
-	req.body = body
-	headers.each_pair { |key, value| req[key] = value } if headers
-	req.content_type = 'text/xml; charset="utf-8"'
-	res = handle_request(req, headers)
-	res
+        req =
+          case verb
+          when :put
+            Net::HTTP::Put.new(path)
+          else
+            raise "unkown sending_body verb #{verb}"
+          end
+        req.body = body
+        headers.each_pair { |key, value| req[key] = value } if headers
+        req.content_type = 'text/xml; charset="utf-8"'
+        res = handle_request(req, headers)
+        res
       end
 
       def request_returning_body(verb, path, headers, &block)
-	req =
-	  case verb
-	  when :get
-	    Net::HTTP::Get.new(path)
-	  else
-	    raise "unkown returning_body verb #{verb}"
-	  end
-	headers.each_pair { |key, value| req[key] = value } if headers
-	res = handle_request(req, headers, MAX_REDIRECTS, &block)
-	res.body
+        req =
+          case verb
+          when :get
+            Net::HTTP::Get.new(path)
+          else
+            raise "unkown returning_body verb #{verb}"
+          end
+        headers.each_pair { |key, value| req[key] = value } if headers
+        res = handle_request(req, headers, MAX_REDIRECTS, &block)
+        res.body
       end
 
       def request(verb, path, body, headers)
-	req =
-	  case verb
-	  when :propfind
-	    Net::HTTP::Propfind.new(path)
-	  when :mkcol
-	    Net::HTTP::Mkcol.new(path)
-	  else
-	    raise "unkown verb #{verb}"
-	  end
-	req.body = body
-	headers.each_pair { |key, value| req[key] = value } if headers
-	req.content_type = 'text/xml; charset="utf-8"'
-	res = handle_request(req, headers)
-	res
+        req =
+          case verb
+          when :propfind
+            Net::HTTP::Propfind.new(path)
+          when :mkcol
+            Net::HTTP::Mkcol.new(path)
+          when :delete
+            Net::HTTP::Delete.new(path)
+          when :move
+            Net::HTTP::Move.new(path)
+          when :copy
+            Net::HTTP::Copy.new(path)
+          when :proppatch
+            Net::HTTP::Proppatch.new(path)
+          else
+            raise "unkown verb #{verb}"
+          end
+        req.body = body
+        headers.each_pair { |key, value| req[key] = value } if headers
+        req.content_type = 'text/xml; charset="utf-8"'
+        res = handle_request(req, headers)
+        res
       end
 
       def handle_request(req, headers, limit = MAX_REDIRECTS, &block)
-	# You should choose better exception. 
-	raise ArgumentError, 'HTTP redirect too deep' if limit == 0
+        # You should choose better exception.
+        raise ArgumentError, 'HTTP redirect too deep' if limit == 0
 
-	response = nil
-	if block
-	  @http.request(req) {|res|
-	    # Only start returning a body if we will not retry
-	    res.read_body nil, &block if !res.is_a?(Net::HTTPUnauthorized) && !res.is_a?(Net::HTTPRedirection)
-	    response = res
-	  }
-	else
-	  response = @http.request(req)
-	end
-	case response
-	when Net::HTTPSuccess     then
-	  return response
-	when Net::HTTPUnauthorized     then
-	  response.error! unless @user
-	  response.error! if req['authorization']
-	  new_req = clone_req(req.path, req, headers)
-	  if response['www-authenticate'] =~ /^Basic/
-	    if disable_basic_auth
-	      raise "server requested basic auth, but that is disabled"
-	    end
-	    new_req.basic_auth @user, @pass
-	  else
-	    digest_auth(new_req, @user, @pass, response)
-	  end
-	  return handle_request(new_req, headers, limit - 1, &block)
-	when Net::HTTPRedirection then
-	  location = URI.parse(response['location'])
-	  if (@uri.scheme != location.scheme ||
-	      @uri.host != location.host ||
-	      @uri.port != location.port)
-	    raise ArgumentError, "cannot redirect to a different host #{@uri} => #{location}"
-	  end
-	  new_req = clone_req(location.path, req, headers)
-	  return handle_request(new_req, headers, limit - 1, &block)
-	else
-	  response.error!
-	end
+        response = nil
+        if block
+          @http.request(req) {|res|
+            # Only start returning a body if we will not retry
+            res.read_body nil, &block if !res.is_a?(Net::HTTPUnauthorized) && !res.is_a?(Net::HTTPRedirection)
+            response = res
+          }
+        else
+          response = @http.request(req)
+        end
+        case response
+        when Net::HTTPSuccess     then
+          return response
+        when Net::HTTPUnauthorized     then
+          response.error! unless @user
+          response.error! if req['authorization']
+          new_req = clone_req(req.path, req, headers)
+          if response['www-authenticate'] =~ /^Basic/
+            if disable_basic_auth
+              raise "server requested basic auth, but that is disabled"
+            end
+            new_req.basic_auth @user, @pass
+          else
+            digest_auth(new_req, @user, @pass, response)
+          end
+          return handle_request(new_req, headers, limit - 1, &block)
+        when Net::HTTPRedirection then
+          location = URI.parse(response['location'])
+          if (@uri.scheme != location.scheme ||
+              @uri.host != location.host ||
+              @uri.port != location.port)
+            raise ArgumentError, "cannot redirect to a different host #{@uri} => #{location}"
+          end
+          new_req = clone_req(location.path, req, headers)
+          return handle_request(new_req, headers, limit - 1, &block)
+        else
+          response.error!
+        end
       end
+
       def clone_req(path, req, headers)
-	new_req = req.class.new(path)
-	new_req.body = req.body if req.body
-	new_req.body_stream = req.body_stream if req.body_stream
-	headers.each_pair { |key, value| new_req[key] = value } if headers
-	return new_req
+        new_req = req.class.new(path)
+        new_req.body = req.body if req.body
+        new_req.body_stream = req.body_stream if req.body_stream
+        headers.each_pair { |key, value| new_req[key] = value } if headers
+        return new_req
       end
 
       CNONCE = Digest::MD5.hexdigest("%x" % (Time.now.to_i + rand(65535))).slice(0, 8)
 
       def digest_auth(request, user, password, response)
-	# based on http://segment7.net/projects/ruby/snippets/digest_auth.rb
-	@nonce_count = 0 if @nonce_count.nil?
-	@nonce_count += 1
+        # based on http://segment7.net/projects/ruby/snippets/digest_auth.rb
+        @nonce_count = 0 if @nonce_count.nil?
+        @nonce_count += 1
 
-	raise "bad www-authenticate header" unless (response['www-authenticate'] =~ /^(\w+) (.*)/)
+        raise "bad www-authenticate header" unless (response['www-authenticate'] =~ /^(\w+) (.*)/)
 
-	params = {}
-	$2.gsub(/(\w+)="(.*?)"/) { params[$1] = $2 }
+        params = {}
+        $2.gsub(/(\w+)="(.*?)"/) { params[$1] = $2 }
 
-	a_1 = "#{user}:#{params['realm']}:#{password}"
-	a_2 = "#{request.method}:#{request.path}"
-	request_digest = ''
-	request_digest << Digest::MD5.hexdigest(a_1)
-	request_digest << ':' << params['nonce']
-	request_digest << ':' << ('%08x' % @nonce_count)
-	request_digest << ':' << CNONCE
-	request_digest << ':' << params['qop']
-	request_digest << ':' << Digest::MD5.hexdigest(a_2)
+        a_1 = "#{user}:#{params['realm']}:#{password}"
+        a_2 = "#{request.method}:#{request.path}"
+        request_digest = ''
+        request_digest << Digest::MD5.hexdigest(a_1)
+        request_digest << ':' << params['nonce']
+        request_digest << ':' << ('%08x' % @nonce_count)
+        request_digest << ':' << CNONCE
+        request_digest << ':' << params['qop']
+        request_digest << ':' << Digest::MD5.hexdigest(a_2)
 
-	header = []
-	header << "Digest username=\"#{user}\""
-	header << "realm=\"#{params['realm']}\""
-	header << "nonce=\"#{params['nonce']}\""
-	header << "uri=\"#{request.path}\""
-	header << "cnonce=\"#{CNONCE}\""
-	header << "nc=#{'%08x' % @nonce_count}"
-	header << "qop=#{params['qop']}"
-	header << "response=\"#{Digest::MD5.hexdigest(request_digest)}\""
-	header << "algorithm=\"MD5\""
+        header = []
+        header << "Digest username=\"#{user}\""
+        header << "realm=\"#{params['realm']}\""
+        header << "nonce=\"#{params['nonce']}\""
+        header << "uri=\"#{request.path}\""
+        header << "cnonce=\"#{CNONCE}\""
+        header << "nc=#{'%08x' % @nonce_count}"
+        header << "qop=#{params['qop']}"
+        header << "response=\"#{Digest::MD5.hexdigest(request_digest)}\""
+        header << "algorithm=\"MD5\""
 
-	header = header.join(', ')
-	request['Authorization'] = header
+        header = header.join(', ')
+        request['Authorization'] = header
       end
     end
 
 
     class CurlHandler < NetHttpHandler
       def verify_callback=(callback)
-	super
-	curl = make_curl
-	$stderr.puts "verify_callback not implemented in Curl::Easy"
+        super
+        curl = make_curl
+        $stderr.puts "verify_callback not implemented in Curl::Easy"
       end
 
       def verify_server=(value)
-	super
-	curl = make_curl
-	curl.ssl_verify_peer = value
-	curl.ssl_verify_host = value
+        super
+        curl = make_curl
+        curl.ssl_verify_peer = value
+        curl.ssl_verify_host = value
       end
 
       def make_curl
-	unless @curl
-	  @curl = Curl::Easy.new
-	  @curl.timeout = @http.read_timeout
-	  @curl.follow_location = true
-	  @curl.max_redirects = MAX_REDIRECTS
-	  if disable_basic_auth
-	    @curl.http_auth_types = Curl::CURLAUTH_DIGEST
-	  end
-	end
-	@curl
+        unless @curl
+          @curl = Curl::Easy.new
+          @curl.timeout = @http.read_timeout
+          @curl.follow_location = true
+          @curl.max_redirects = MAX_REDIRECTS
+          if disable_basic_auth
+            @curl.http_auth_types = Curl::CURLAUTH_DIGEST
+          end
+        end
+        @curl
       end
 
       def request_returning_body(verb, path, headers)
-	raise "unkown returning_body verb #{verb}" unless verb == :get
-	url = @uri.merge(path)
-	curl = make_curl
-	curl.url = url.to_s
-	headers.each_pair { |key, value| curl.headers[key] = value } if headers
-	if (@user)
-	  curl.userpwd = "#{@user}:#{@pass}"
-	else
-	  curl.userpwd = nil
-	end
-	res = nil
-	if block_given?
-	  curl.on_body do |frag|
-	    yield frag
-	    frag.length
-	  end
-	end
-	curl.perform
-	unless curl.response_code >= 200 && curl.response_code < 300
-	  header_block = curl.header_str.split(/\r?\n\r?\n/)[-1]
-	  msg = header_block.split(/\r?\n/)[0]
-	  msg.gsub!(/^HTTP\/\d+.\d+ /, '')
-	  raise Net::HTTPError.new(msg, nil)
-	end
-	curl.body_str
+        raise "unkown returning_body verb #{verb}" unless verb == :get
+        url = @uri.merge(path)
+        curl = make_curl
+        curl.url = url.to_s
+        headers.each_pair { |key, value| curl.headers[key] = value } if headers
+        if (@user)
+          curl.userpwd = "#{@user}:#{@pass}"
+        else
+          curl.userpwd = nil
+        end
+        res = nil
+        if block_given?
+          curl.on_body do |frag|
+            yield frag
+            frag.length
+          end
+        end
+        curl.perform
+        unless curl.response_code >= 200 && curl.response_code < 300
+          header_block = curl.header_str.split(/\r?\n\r?\n/)[-1]
+          msg = header_block.split(/\r?\n/)[0]
+          msg.gsub!(/^HTTP\/\d+.\d+ /, '')
+          raise Net::HTTPError.new(msg, nil)
+        end
+        curl.body_str
       end
 
     end
@@ -325,7 +334,7 @@ module Net #:nodoc:
     def initialize(uri, options = nil)
       @have_curl = Curl rescue nil
       if options && options.has_key?(:curl) && !options[:curl]
-	@have_curl = false
+        @have_curl = false
       end
       @uri = uri
       @uri = URI.parse(@uri) if @uri.is_a? String
@@ -343,7 +352,7 @@ module Net #:nodoc:
     #  end
     def start(&block) # :yield: dav
       @handler.start do
-	return yield(self)
+        return yield(self)
       end
     end
 
@@ -376,23 +385,23 @@ module Net #:nodoc:
       doc = propfind(path)
       path.sub!(/\/$/, '')
       doc./('.//x:response', namespaces).each do |item|
-	uri = @uri.merge(item.xpath("x:href", namespaces).inner_text)
-	size = item.%(".//x:getcontentlength", namespaces).inner_text rescue nil
-	type = item.%(".//x:collection", namespaces) ? :directory : :file
-	res = Item.new(self, uri, type, size)
-	if type == :file
-	  yield res
-	elsif uri.path == path || uri.path == path + "/"
-	  # This is the top-level dir, skip it
-	elsif options[:recursive] && type == :directory
-	  yield res
-	  # This is a subdir, recurse
-	  find(uri.path, options) do |sub_res|
-	    yield sub_res
-	  end
-	else
-	  yield res
-	end
+        uri = @uri.merge(item.xpath("x:href", namespaces).inner_text)
+        size = item.%(".//x:getcontentlength", namespaces).inner_text rescue nil
+        type = item.%(".//x:collection", namespaces) ? :directory : :file
+        res = Item.new(self, uri, type, size)
+        if type == :file
+          yield res
+        elsif uri.path == path || uri.path == path + "/"
+          # This is the top-level dir, skip it
+        elsif options[:recursive] && type == :directory
+          yield res
+          # This is a subdir, recurse
+          find(uri.path, options) do |sub_res|
+            yield sub_res
+          end
+        else
+          yield res
+        end
       end
     end
 
@@ -400,7 +409,7 @@ module Net #:nodoc:
     def cd(url)
       new_uri = @uri.merge(url)
       if new_uri.host != @uri.host || new_uri.port != @uri.port || new_uri.scheme != @uri.scheme
-	raise Exception , "uri must have same scheme, host and port"
+        raise Exception , "uri must have same scheme, host and port"
       end
       @uri = new_uri
     end
@@ -441,6 +450,45 @@ module Net #:nodoc:
       res.body
     end
 
+    # Delete request
+    def delete(path)
+      path = @uri.merge(path).path
+      res = @handler.request(:delete, path, nil, nil)
+      res.body
+    end
+
+    # Move request
+    def move(path,destination)
+      path = @uri.merge(path).path
+      destination = @uri.merge(destination).to_s
+      headers = {'Destination' => destination}
+      res = @handler.request(:move, path, nil, headers)
+      res.body
+    end
+
+    # Copy request
+    def copy(path,destination)
+      path = @uri.merge(path).path
+      destination = @uri.merge(destination).to_s
+      headers = {'Destination' => destination}
+      res = @handler.request(:copy, path, nil, headers)
+      res.body
+    end
+
+    # Proppatch request
+    def proppatch(path, xml_snippet)
+      headers = {'Depth' => '1'}
+      body =  '<?xml version="1.0"?>' +
+      '<d:propertyupdate xmlns:d="DAV:" xmlns:v="vrtx">' +
+      '<d:set>' +
+          '<d:prop>' +
+            xml_snippet +
+          '</d:prop>' +
+        '</d:set>' +
+      '</d:propertyupdate>'
+      res = @handler.request(:proppatch, path, body, headers)
+      Nokogiri::XML.parse(res.body)
+    end
 
     # Makes a new directory (collection)
     def mkdir(path)

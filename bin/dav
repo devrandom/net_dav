@@ -21,6 +21,7 @@ def print_usage
   puts "    put        Put file from FILE to URL"
   puts "    mkdir      Create directory at URL"
   puts "    gsub       Replace content at URL from REGEXP to VALUE"
+  puts "    props      Display xml properties for file or directory at URL"
   exit
 end
 
@@ -62,13 +63,13 @@ res = dav.start { |dav|
   when 'get'
     if file.nil?
       dav.get(url.path) do |str|
-	$stdout.print str
+        $stdout.print str
       end
     else
       File.open(file, "w") do |stream|
-	dav.get(url.path) do |str|
-	  stream.print str
-	end
+        dav.get(url.path) do |str|
+          stream.print str
+        end
       end
     end
   when 'lsr'
@@ -86,9 +87,11 @@ res = dav.start { |dav|
     val = $*[3]
     dav.find(url.path) do |item|
       if (item.type == :file)
-	item.content = item.content.gsub(re, val)
+        item.content = item.content.gsub(re, val)
       end
     end
+  when 'props'
+    puts dav.propfind(url.path).to_s
   else
     print_usage
   end
