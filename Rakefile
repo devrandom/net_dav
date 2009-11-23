@@ -10,6 +10,7 @@ begin
     gem.email = "c1.github@niftybox.net"
     gem.homepage = "http://github.com/devrandom/net_dav"
     gem.authors = ["Miron Cuperman"]
+    gem.executables = ["dav"]
     gem.add_dependency "nokogiri", ">= 1.3.0"
     gem.add_development_dependency "rspec", ">= 1.2.0"
 
