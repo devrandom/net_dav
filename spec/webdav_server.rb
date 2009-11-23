@@ -4,7 +4,11 @@ require 'rubygems'
 require 'webrick'
 require 'webrick/httpservlet/webdavhandler'
 
-# Webdav server based on:
+# Web server with WebDAV extensions
+#
+# Usage: ruby webdav_server.rb
+
+# Code based on:
 # http://github.com/aslakhellesoy/webdavjs/blob/master/spec/webdav_server.rb
 
 
@@ -66,7 +70,7 @@ def webdav_server(*options)
   log.level = WEBrick::Log::DEBUG if $DEBUG
   serv = WEBrick::HTTPServer.new({:Port => port, :Logger => log})
 
-  dir = Dir.pwd + '/spec/fixtures'
+  dir = File.expand_path(File.dirname(__FILE__)) +  '/fixtures'
   if(options and options[0][:authentication])
     serv.mount("/", WEBrick::HTTPServlet::WebDAVHandlerVersion3, dir)
   else
@@ -78,5 +82,6 @@ def webdav_server(*options)
 end
 
 if($0 ==  __FILE__)
+
   webdav_server(:port => 10080,:authentication => false)
 end
