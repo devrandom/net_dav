@@ -114,6 +114,10 @@ module Net #:nodoc:
             Net::HTTP::Mkcol.new(path)
           when :delete
             Net::HTTP::Delete.new(path)
+          when :move
+            Net::HTTP::Move.new(path)
+          when :copy
+            Net::HTTP::Copy.new(path)
           else
             raise "unkown verb #{verb}"
           end
@@ -167,6 +171,7 @@ module Net #:nodoc:
           response.error!
         end
       end
+
       def clone_req(path, req, headers)
         new_req = req.class.new(path)
         new_req.body = req.body if req.body
@@ -449,6 +454,25 @@ module Net #:nodoc:
       res = @handler.request(:delete, path, nil, nil)
       res.body
     end
+
+    # Move request
+    def move(path,destination)
+      path = @uri.merge(path).path
+      destination = @uri.merge(destination).to_s
+      headers = {'Destination' => destination}
+      res = @handler.request(:move, path, nil, headers)
+      res.body
+    end
+
+    # Copy request
+    def copy(path,destination)
+      path = @uri.merge(path).path
+      destination = @uri.merge(destination).to_s
+      headers = {'Destination' => destination}
+      res = @handler.request(:copy, path, nil, headers)
+      res.body
+    end
+
 
     # Makes a new directory (collection)
     def mkdir(path)
