@@ -77,6 +77,16 @@ describe "Net::Dav" do
     @props.should match(/200 OK/i)
   end
 
+# proppatch seems to work, but our simple webdav server don't update properties
+#   it "should alter properties on resources on webdav server" do
+#     dav = Net::DAV.new("http://localhost:10080/")
+#     @props = find_props_or_error(dav, "/file.html")
+#     puts @props
+#     dav.proppatch("/file.html", "<d:resourcetype>static-file</d:resourcetype>")
+#     @props = find_props_or_error(dav, "/file.html")
+#     puts @props
+#   end
+
   after(:all) do
     # Shut down webdav server
     Process.kill('SIGKILL', @pid) rescue nil
