@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{net_dav}
-  s.version = "0.3.3"
+  s.version = "0.4.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Miron Cuperman"]
-  s.date = %q{2009-11-19}
+  s.authors = ["Miron Cuperman", "Thomas Flemming"]
+  s.date = %q{2009-11-23}
   s.default_executable = %q{dav}
   s.description = %q{WebDAV client library in the style of Net::HTTP, using Net::HTTP and libcurl, if installed}
   s.email = %q{c1.github@niftybox.net}
@@ -30,9 +30,11 @@ Gem::Specification.new do |s|
      "lib/net/dav/item.rb",
      "net_dav.gemspec",
      "script/multi-test",
+     "spec/fixtures/file.html",
      "spec/net_dav_spec.rb",
      "spec/spec.opts",
      "spec/spec_helper.rb",
+     "spec/webdav_server.rb",
      "tmp/.gitignore"
   ]
   s.homepage = %q{http://github.com/devrandom/net_dav}
@@ -41,7 +43,8 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.5}
   s.summary = %q{WebDAV client library in the style of Net::HTTP}
   s.test_files = [
-    "spec/net_dav_spec.rb",
+    "spec/webdav_server.rb",
+     "spec/net_dav_spec.rb",
      "spec/spec_helper.rb"
   ]
 
