@@ -13,6 +13,7 @@ begin
     gem.executables = ["dav"]
     gem.add_dependency "nokogiri", ">= 1.3.0"
     gem.add_development_dependency "rspec", ">= 1.2.0"
+    gem.add_development_dependency "webrick-webdav", ">= 1.0"
 
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
