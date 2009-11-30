@@ -382,7 +382,15 @@ module Net #:nodoc:
     def find(path, options = {})
       path = @uri.merge(path).path
       namespaces = {'x' => "DAV:"}
-      doc = propfind(path)
+      begin
+        doc = propfind(path)
+      rescue Net::HTTPServerException => e
+        if(options[:safe_mode])then
+          warn("Warning:" + e.to_s)
+        else
+          throw e
+        end
+      end
       path.sub!(/\/$/, '')
       doc./('.//x:response', namespaces).each do |item|
         uri = @uri.merge(item.xpath("x:href", namespaces).inner_text)
@@ -479,13 +487,14 @@ module Net #:nodoc:
     def proppatch(path, xml_snippet)
       headers = {'Depth' => '1'}
       body =  '<?xml version="1.0"?>' +
-      '<d:propertyupdate xmlns:d="DAV:" xmlns:v="vrtx">' +
+      '<d:propertyupdate xmlns:d="DAV:">' +
       '<d:set>' +
           '<d:prop>' +
             xml_snippet +
           '</d:prop>' +
         '</d:set>' +
       '</d:propertyupdate>'
+puts body
       res = @handler.request(:proppatch, path, body, headers)
       Nokogiri::XML.parse(res.body)
     end
