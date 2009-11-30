@@ -371,6 +371,16 @@ module Net #:nodoc:
 
     # Find files and directories, yields Net::DAV::Item
     #
+    # The :filename option can be a regexp or string, and is used
+    # to filter the yielded items.
+    #
+    # If :suppress_errors is passed, exceptions that occurs when
+    # reading directory information is ignored, and a warning is
+    # printed out stderr instead.
+    #
+    # The default is to not traverse recursively, unless the :recursive
+    # options is passed.
+    #
     # Examples:
     #
     #  res = Net::DAV.start(url) do |dav|
@@ -378,6 +388,11 @@ module Net #:nodoc:
     #      puts "#{item.type} #{item.uri}"
     #      puts item.content
     #    end
+    #  end
+    #
+    #  dav = Net::DAV.new(url)
+    #  dav.find(url.path, :filename => /\.html/, :suppress_errors => true)
+    #    puts item.url.to_s
     #  end
     def find(path, options = {})
       path = @uri.merge(path).path
@@ -480,13 +495,19 @@ module Net #:nodoc:
     end
 
     # Delete request
+    #
+    # Example:
+    #   dav.delete(uri.path)
     def delete(path)
       path = @uri.merge(path).path
       res = @handler.request(:delete, path, nil, nil)
       res.body
     end
 
-    # Move request
+    # Send a move request to the server.
+    #
+    # Example:
+    #   dav.move(original_path, new_path)
     def move(path,destination)
       path = @uri.merge(path).path
       destination = @uri.merge(destination).to_s
@@ -495,7 +516,10 @@ module Net #:nodoc:
       res.body
     end
 
-    # Copy request
+    # Send a copy request to the server.
+    #
+    # Example:
+    #   dav.copy(original_path, destination)
     def copy(path,destination)
       path = @uri.merge(path).path
       destination = @uri.merge(destination).to_s
@@ -504,7 +528,11 @@ module Net #:nodoc:
       res.body
     end
 
-    # Proppatch request
+    # Do a proppatch request to the server to
+    # update properties on resources or collections.
+    #
+    # Example:
+    #   dav.proppatch(uri.path,"<d:creationdate>#{new_date}</d:creationdate>")
     def proppatch(path, xml_snippet)
       headers = {'Depth' => '1'}
       body =  '<?xml version="1.0"?>' +
