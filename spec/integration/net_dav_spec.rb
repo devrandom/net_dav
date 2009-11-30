@@ -1,4 +1,5 @@
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+require File.expand_path(File.dirname(__FILE__) + '/webdav_server')
 
 describe "Net::Dav" do
 
@@ -8,7 +9,7 @@ describe "Net::Dav" do
       webdav_server(:port => 10080,:authentication => false)
     end
     # Wait for webdavserver to start
-    sleep(2)
+    sleep(10)
   end
 
   it "should create a Net::Dav object" do

@@ -70,7 +70,7 @@ def webdav_server(*options)
   log.level = WEBrick::Log::DEBUG if $DEBUG
   serv = WEBrick::HTTPServer.new({:Port => port, :Logger => log})
 
-  dir = File.expand_path(File.dirname(__FILE__)) +  '/fixtures'
+  dir = File.expand_path(File.dirname(__FILE__)) +  '/../fixtures'
   if(options and options[0][:authentication])
     serv.mount("/", WEBrick::HTTPServlet::WebDAVHandlerVersion3, dir)
   else
