@@ -385,10 +385,13 @@ module Net #:nodoc:
       begin
         doc = propfind(path)
       rescue Net::HTTPServerException => e
-        if(options[:safe_mode])then
-          warn("Warning:" + e.to_s)
+        msg = e.to_s + ": " + path.to_s
+        if(options[:error_warning])then
+          # Ignore dir if propfind returns an error
+          warn("Warning: " + msg)
+          return nil
         else
-          throw e
+          raise Net::HTTPServerException.new(msg, nil)
         end
       end
       path.sub!(/\/$/, '')
@@ -397,18 +400,36 @@ module Net #:nodoc:
         size = item.%(".//x:getcontentlength", namespaces).inner_text rescue nil
         type = item.%(".//x:collection", namespaces) ? :directory : :file
         res = Item.new(self, uri, type, size)
-        if type == :file
-          yield res
+        if type == :file then
+
+          if(options[:filename])then
+            search_term = options[:filename]
+            filename = File.basename(uri.path)
+            if(search_term.class == Regexp and search_term.match(filename))then
+              yield res
+            elsif(search_term.class == String and search_term == filename)then
+              yield res
+            end
+          else
+            yield res
+          end
+
         elsif uri.path == path || uri.path == path + "/"
           # This is the top-level dir, skip it
         elsif options[:recursive] && type == :directory
-          yield res
+
+          if(!options[:filename])then
+            yield res
+          end
+
           # This is a subdir, recurse
           find(uri.path, options) do |sub_res|
             yield sub_res
           end
         else
-          yield res
+          if(!options[:filename])then
+            yield res
+          end
         end
       end
     end
@@ -494,7 +515,6 @@ module Net #:nodoc:
           '</d:prop>' +
         '</d:set>' +
       '</d:propertyupdate>'
-puts body
       res = @handler.request(:proppatch, path, body, headers)
       Nokogiri::XML.parse(res.body)
     end
