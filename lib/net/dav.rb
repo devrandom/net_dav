@@ -386,7 +386,7 @@ module Net #:nodoc:
         doc = propfind(path)
       rescue Net::HTTPServerException => e
         msg = e.to_s + ": " + path.to_s
-        if(options[:error_warning])then
+        if(options[:suppress_errors])then
           # Ignore dir if propfind returns an error
           warn("Warning: " + msg)
           return nil
