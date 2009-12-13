@@ -9,24 +9,7 @@ describe "Net::Dav" do
       webdav_server(:port => 10080, :authentication => false)
     end
     # Wait for webdavserver to start
-
-    server_running = false
-    dav = Net::DAV.new("http://localhost:10080/")
-    while(not(server_running))
-      begin
-        sleep(0.1)
-        props = dav.propfind("/").to_s
-        if(props.match(/200 OK/))
-          server_running = true
-        else
-          warn "Webdav server should return \"200 OK\" "
-          exit(1)
-        end
-      rescue
-        puts "Server not running. Retrying..."
-      end
-    end
-    dav = nil
+    wait_for_server("http://localhost:10080/")
   end
 
   it "should create a Net::Dav object" do
