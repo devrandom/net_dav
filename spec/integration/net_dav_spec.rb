@@ -6,10 +6,27 @@ describe "Net::Dav" do
   before(:all) do
     # Start webdav server in subprocess
     @pid = fork do
-      webdav_server(:port => 10080,:authentication => false)
+      webdav_server(:port => 10080, :authentication => false)
     end
     # Wait for webdavserver to start
-    sleep(10)
+
+    server_running = false
+    dav = Net::DAV.new("http://localhost:10080/")
+    while(not(server_running))
+      begin
+        sleep(0.1)
+        props = dav.propfind("/").to_s
+        if(props.match(/200 OK/))
+          server_running = true
+        else
+          warn "Webdav server should return \"200 OK\" "
+          exit(1)
+        end
+      rescue
+        puts "Server not running. Retrying..."
+      end
+    end
+    dav = nil
   end
 
   it "should create a Net::Dav object" do
