@@ -13,6 +13,7 @@ end
 def wait_for_server(address)
   server_running = false
   dav = Net::DAV.new(address)
+  count = 0
   while(not(server_running))
     begin
       sleep(0.1)
@@ -24,7 +25,8 @@ def wait_for_server(address)
         exit(1)
       end
     rescue
-      puts "Server not running. Retrying..."
+      count += 1
+      puts "Server not running. Retrying..." if ((count % 10) == 0)
     end
   end
   dav = nil
