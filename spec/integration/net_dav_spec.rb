@@ -6,10 +6,10 @@ describe "Net::Dav" do
   before(:all) do
     # Start webdav server in subprocess
     @pid = fork do
-      webdav_server(:port => 10080,:authentication => false)
+      webdav_server(:port => 10080, :authentication => false)
     end
     # Wait for webdavserver to start
-    sleep(10)
+    wait_for_server("http://localhost:10080/")
   end
 
   it "should create a Net::Dav object" do
