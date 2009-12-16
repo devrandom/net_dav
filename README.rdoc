@@ -25,6 +25,11 @@ http://wiki.github.com/tenderlove/nokogiri/what-to-do-if-libxml2-is-being-a-jerk
 end with a slash, otherwise it is assumed that the last component is a file
 and "." will refer to the parent.)
 
+== Documentation
+
+RDoc: http://rdoc.info/projects/devrandom/net_dav
+Wiki: http://wiki.github.com/devrandom/net_dav
+
 == Performance
 
 This should be threadsafe if you use a different Net::DAV object
