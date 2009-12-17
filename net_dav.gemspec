@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{net_dav}
-  s.version = "0.4.0"
+  s.version = "0.4.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Miron Cuperman", "Thomas Flemming"]
-  s.date = %q{2009-11-23}
+  s.date = %q{2009-12-16}
   s.default_executable = %q{dav}
   s.description = %q{WebDAV client library in the style of Net::HTTP, using Net::HTTP and libcurl, if installed}
   s.email = %q{c1.github@niftybox.net}
@@ -31,10 +31,10 @@ Gem::Specification.new do |s|
      "net_dav.gemspec",
      "script/multi-test",
      "spec/fixtures/file.html",
-     "spec/net_dav_spec.rb",
+     "spec/integration/net_dav_spec.rb",
+     "spec/integration/webdav_server.rb",
      "spec/spec.opts",
      "spec/spec_helper.rb",
-     "spec/webdav_server.rb",
      "tmp/.gitignore"
   ]
   s.homepage = %q{http://github.com/devrandom/net_dav}
@@ -43,9 +43,9 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.5}
   s.summary = %q{WebDAV client library in the style of Net::HTTP}
   s.test_files = [
-    "spec/webdav_server.rb",
-     "spec/net_dav_spec.rb",
-     "spec/spec_helper.rb"
+    "spec/spec_helper.rb",
+     "spec/integration/webdav_server.rb",
+     "spec/integration/net_dav_spec.rb"
   ]
 
   if s.respond_to? :specification_version then
@@ -55,13 +55,16 @@ Gem::Specification.new do |s|
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<nokogiri>, [">= 1.3.0"])
       s.add_development_dependency(%q<rspec>, [">= 1.2.0"])
+      s.add_development_dependency(%q<webrick-webdav>, [">= 1.0"])
     else
       s.add_dependency(%q<nokogiri>, [">= 1.3.0"])
       s.add_dependency(%q<rspec>, [">= 1.2.0"])
+      s.add_dependency(%q<webrick-webdav>, [">= 1.0"])
     end
   else
     s.add_dependency(%q<nokogiri>, [">= 1.3.0"])
     s.add_dependency(%q<rspec>, [">= 1.2.0"])
+    s.add_dependency(%q<webrick-webdav>, [">= 1.0"])
   end
 end
 
