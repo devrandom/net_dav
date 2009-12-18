@@ -534,6 +534,7 @@ module Net #:nodoc:
     # Example:
     #   dav.proppatch(uri.path,"<d:creationdate>#{new_date}</d:creationdate>")
     def proppatch(path, xml_snippet)
+      path = @uri.merge(path).path
       headers = {'Depth' => '1'}
       body =  '<?xml version="1.0"?>' +
       '<d:propertyupdate xmlns:d="DAV:">' +
