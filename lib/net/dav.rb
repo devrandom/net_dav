@@ -399,14 +399,14 @@ module Net #:nodoc:
       namespaces = {'x' => "DAV:"}
       begin
         doc = propfind(path)
-      rescue Net::HTTPServerException => e
+      rescue Net::ProtocolError => e
         msg = e.to_s + ": " + path.to_s
         if(options[:suppress_errors])then
           # Ignore dir if propfind returns an error
           warn("Warning: " + msg)
           return nil
         else
-          raise Net::HTTPServerException.new(msg, nil)
+          raise e.class.new(msg, nil)
         end
       end
       path.sub!(/\/$/, '')

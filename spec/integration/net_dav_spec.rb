@@ -22,6 +22,22 @@ describe "Net::Dav" do
     @props.should match(/200 OK/)
   end
 
+  it "should raise if finding non-existent path" do
+    dav = Net::DAV.new("http://localhost:10080/")
+    lambda do
+      dav.find("/") do |item|
+      end
+    end.should_not raise_error
+  end
+
+  it "should raise if finding non-existent path" do
+    dav = Net::DAV.new("http://localhost:10080/")
+    lambda do
+      dav.find("/asdf") do |item|
+      end
+    end.should raise_error Net::HTTPServerException
+  end
+
   it "should write files to webdav server" do
     dav = Net::DAV.new("http://localhost:10080/")
     @props = find_props_or_error(dav, "/new_file.html")
