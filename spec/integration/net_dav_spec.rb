@@ -94,6 +94,12 @@ describe "Net::Dav" do
     @props.should match(/200 OK/i)
   end
 
+  it "should retrieve acl" do
+    dav = Net::DAV.new("http://localhost:10080/")
+    @props = dav.propfind("/", :acl).to_s
+    @props.should match(/200 OK/i)
+  end
+
 # proppatch seems to work, but our simple webdav server don't update properties
 #   it "should alter properties on resources on webdav server" do
 #     dav = Net::DAV.new("http://localhost:10080/")
