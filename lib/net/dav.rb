@@ -362,9 +362,35 @@ module Net #:nodoc:
       @handler.pass = pass
     end
 
-    def propfind(path) #:nodoc:
+    # Perform a PROPFIND request
+    #
+    # Example:
+    #
+    # Basic propfind:
+    #
+    #   properties = propfind('/path/')
+    #
+    # Get ACL for resource:
+    #
+    #  properties = propfind('/path/', :acl)
+    #
+    # Custom propfind:
+    #
+    #  properties = propfind('/path/', '<?xml version="1.0" encoding="utf-8"?>...')
+    #
+    # See http://webdav.org/specs/rfc3744.html#rfc.section.5.9 for more on
+    # how to retrieve access control properties.
+    def propfind(path,*options)
       headers = {'Depth' => '1'}
-      body = '<?xml version="1.0" encoding="utf-8"?><DAV:propfind xmlns:DAV="DAV:"><DAV:allprop/></DAV:propfind>'
+      if(options[0] == :acl)
+        body = '<?xml version="1.0" encoding="utf-8" ?><D:propfind xmlns:D="DAV:"><D:prop><D:owner/>' +
+                '<D:supported-privilege-set/><D:current-user-privilege-set/><D:acl/></D:prop></D:propfind>'
+      else
+        body = options[0]
+      end
+      if(!body)
+        body = '<?xml version="1.0" encoding="utf-8"?><DAV:propfind xmlns:DAV="DAV:"><DAV:allprop/></DAV:propfind>'
+      end
       res = @handler.request(:propfind, path, body, headers)
       Nokogiri::XML.parse(res.body)
     end
