@@ -100,6 +100,12 @@ describe "Net::Dav" do
     @props.should match(/200 OK/i)
   end
 
+  it "should detect if resource or collection exists on server" do
+    dav = Net::DAV.new("http://localhost:10080/")
+    dav.exists?('/file.html').should == true
+    dav.exists?('/totally_unknown_file.html').should == false
+  end
+
 # proppatch seems to work, but our simple webdav server don't update properties
 #   it "should alter properties on resources on webdav server" do
 #     dav = Net::DAV.new("http://localhost:10080/")

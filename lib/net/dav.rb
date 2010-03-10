@@ -574,6 +574,21 @@ module Net #:nodoc:
       Nokogiri::XML.parse(res.body)
     end
 
+    # Returns true if resource exists on server.
+    #
+    # Example:
+    #   dav.exists?('https://www.example.com/collection/')  => true
+    #   dav.exists?('/collection/')  => true
+    def exists?(path)
+      path = @uri.merge(path).path
+      begin
+        self.propfind(path)
+      rescue Net::HTTPServerException => e
+        return false if(e.to_s =~ /404/)
+      end
+      return true
+    end
+
     # Makes a new directory (collection)
     def mkdir(path)
       path = @uri.merge(path).path
