@@ -581,12 +581,14 @@ module Net #:nodoc:
     #   dav.exists?('/collection/')  => true
     def exists?(path)
       path = @uri.merge(path).path
+      headers = {'Depth' => '1'}
+      body = '<?xml version="1.0" encoding="utf-8"?><DAV:propfind xmlns:DAV="DAV:"><DAV:allprop/></DAV:propfind>'
       begin
-        self.propfind(path)
-      rescue Net::HTTPServerException => e
-        return false if(e.to_s =~ /404/)
+        res = @handler.request(:propfind, path, body, headers)
+      rescue
+        return false
       end
-      return true
+      return (res.is_a? Net::HTTPSuccess)
     end
 
     # Makes a new directory (collection)
