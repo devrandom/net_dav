@@ -177,7 +177,11 @@ module Net #:nodoc:
       def clone_req(path, req, headers)
         new_req = req.class.new(path)
         new_req.body = req.body if req.body
-        new_req.body_stream = req.body_stream if req.body_stream
+        if (req.body_stream)
+          req.body_stream.rewind
+          new_req.body_stream = req.body_stream
+        end
+        new_req.content_length = req.content_length if req.content_length
         headers.each_pair { |key, value| new_req[key] = value } if headers
         return new_req
       end
