@@ -106,6 +106,7 @@ module Net #:nodoc:
       end
 
       def request(verb, path, body, headers)
+        headers = {"User-Agent" => "Ruby"}.merge(headers)
         req =
           case verb
           when :propfind
