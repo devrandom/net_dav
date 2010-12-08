@@ -62,6 +62,8 @@ module Net #:nodoc:
       end
 
       def request_sending_stream(verb, path, stream, length, headers)
+        headers ||= {}
+        headers = {"User-Agent" => "Ruby"}.merge(headers)
         req =
           case verb
           when :put
@@ -78,6 +80,8 @@ module Net #:nodoc:
       end
 
       def request_sending_body(verb, path, body, headers)
+        headers ||= {}
+        headers = {"User-Agent" => "Ruby"}.merge(headers)
         req =
           case verb
           when :put
@@ -93,6 +97,7 @@ module Net #:nodoc:
       end
 
       def request_returning_body(verb, path, headers, &block)
+        headers ||= {}
         headers = {"User-Agent" => "Ruby"}.merge(headers)
         req =
           case verb
@@ -107,6 +112,7 @@ module Net #:nodoc:
       end
 
       def request(verb, path, body, headers)
+        headers ||= {}
         headers = {"User-Agent" => "Ruby"}.merge(headers)
         req =
           case verb
