@@ -93,6 +93,7 @@ module Net #:nodoc:
       end
 
       def request_returning_body(verb, path, headers, &block)
+        headers = {"User-Agent" => "Ruby"}.merge(headers)
         req =
           case verb
           when :get
