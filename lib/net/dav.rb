@@ -128,6 +128,8 @@ module Net #:nodoc:
             Net::HTTP::Copy.new(path)
           when :proppatch
             Net::HTTP::Proppatch.new(path)
+	  when :lock
+            Net::HTTP::Lock.new(path)
           else
             raise "unkown verb #{verb}"
           end
@@ -576,14 +578,37 @@ module Net #:nodoc:
       headers = {'Depth' => '1'}
       body =  '<?xml version="1.0"?>' +
       '<d:propertyupdate xmlns:d="DAV:">' +
-      '<d:set>' +
-          '<d:prop>' +
-            xml_snippet +
-          '</d:prop>' +
-        '</d:set>' +
+         xml_snippet +
       '</d:propertyupdate>'
       res = @handler.request(:proppatch, path, body, headers)
       Nokogiri::XML.parse(res.body)
+    end
+
+    # Send a lock request to the server
+    #
+    # On success returns an XML response body with a Lock-Token
+    #
+    # Example:
+    #   dav.lock(uri.path, "<d:lockscope><d:exclusive/></d:lockscope><d:locktype><d:write/></d:locktype><d:owner>Owner</d:owner>")
+    def lock(path, xml_snippet)
+      path = @uri.merge(path).path
+      headers = {'Depth' => '1'}
+      body =  '<?xml version="1.0"?>' +
+      '<d:lockinfo xmlns:d="DAV:">' +
+         xml_snippet +
+      '</d:lockinfo>'
+      res = @handler.request(:lock, path, body, headers)
+      Nokogiri::XML.parse(res.body)
+    end
+
+    # Send an unlock request to the server
+    #
+    # Example:
+    #   dav.unlock(uri.path, "opaquelocktoken:eee47ade-09ac-626b-02f7-e354175d984e")
+    def unlock(path, locktoken)
+     headers = {'Lock-Token' => '<'+locktoken+'>'}
+     path = @uri.merge(path).path
+     res = @handler.request(:unlock, path, nil, headers)
     end
 
     # Returns true if resource exists on server.
