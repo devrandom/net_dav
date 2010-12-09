@@ -130,6 +130,8 @@ module Net #:nodoc:
             Net::HTTP::Proppatch.new(path)
 	  when :lock
             Net::HTTP::Lock.new(path)
+          when :unlock
+            Net::HTTP::Unlock.new(path)
           else
             raise "unkown verb #{verb}"
           end
