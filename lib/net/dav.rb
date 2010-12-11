@@ -574,7 +574,11 @@ module Net #:nodoc:
     # update properties on resources or collections.
     #
     # Example:
-    #   dav.proppatch(uri.path,"<d:creationdate>#{new_date}</d:creationdate>")
+    #   dav.proppatch(uri.path,
+    #     "<d:set><d:prop>" +
+    #     "<d:creationdate>#{new_date}</d:creationdate>" +
+    #     "</d:set></d:prop>" +
+    #     )
     def proppatch(path, xml_snippet)
       path = @uri.merge(path).path
       headers = {'Depth' => '1'}
