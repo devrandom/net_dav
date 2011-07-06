@@ -355,6 +355,7 @@ module Net #:nodoc:
       @uri = uri
       @uri = URI.parse(@uri) if @uri.is_a? String
       @handler = @have_curl ? CurlHandler.new(@uri) : NetHttpHandler.new(@uri)
+      @headers = options[:headers] rescue {}
     end
 
     # Opens the connection to the host.  Yields self to the block.
@@ -378,6 +379,11 @@ module Net #:nodoc:
       @handler.pass = pass
     end
 
+    # Set extra headers for the dav request
+    def headers(headers)
+      @headers = headers
+    end
+    
     # Perform a PROPFIND request
     #
     # Example:
@@ -407,7 +413,7 @@ module Net #:nodoc:
       if(!body)
         body = '<?xml version="1.0" encoding="utf-8"?><DAV:propfind xmlns:DAV="DAV:"><DAV:allprop/></DAV:propfind>'
       end
-      res = @handler.request(:propfind, path, body, headers)
+      res = @handler.request(:propfind, path, body, headers.merge(@headers))
       Nokogiri::XML.parse(res.body)
     end
 
@@ -509,7 +515,7 @@ module Net #:nodoc:
 
     def get(path, &block)
       path = @uri.merge(path).path
-      body = @handler.request_returning_body(:get, path, nil, &block)
+      body = @handler.request_returning_body(:get, path, @headers, &block)
       body
     end
 
@@ -521,7 +527,7 @@ module Net #:nodoc:
     # end
     def put(path, stream, length)
       path = @uri.merge(path).path
-      res = @handler.request_sending_stream(:put, path, stream, length, nil)
+      res = @handler.request_sending_stream(:put, path, stream, length, @headers)
       res.body
     end
 
@@ -532,7 +538,7 @@ module Net #:nodoc:
     #
     def put_string(path, str)
       path = @uri.merge(path).path
-      res = @handler.request_sending_body(:put, path, str, nil)
+      res = @handler.request_sending_body(:put, path, str, @headers)
       res.body
     end
 
@@ -542,7 +548,7 @@ module Net #:nodoc:
     #   dav.delete(uri.path)
     def delete(path)
       path = @uri.merge(path).path
-      res = @handler.request(:delete, path, nil, nil)
+      res = @handler.request(:delete, path, nil, @headers)
       res.body
     end
 
@@ -554,7 +560,7 @@ module Net #:nodoc:
       path = @uri.merge(path).path
       destination = @uri.merge(destination).to_s
       headers = {'Destination' => destination}
-      res = @handler.request(:move, path, nil, headers)
+      res = @handler.request(:move, path, nil, headers.merge(@headers))
       res.body
     end
 
@@ -566,7 +572,7 @@ module Net #:nodoc:
       path = @uri.merge(path).path
       destination = @uri.merge(destination).to_s
       headers = {'Destination' => destination}
-      res = @handler.request(:copy, path, nil, headers)
+      res = @handler.request(:copy, path, nil, headers.merge(@headers))
       res.body
     end
 
@@ -586,7 +592,7 @@ module Net #:nodoc:
       '<d:propertyupdate xmlns:d="DAV:">' +
          xml_snippet +
       '</d:propertyupdate>'
-      res = @handler.request(:proppatch, path, body, headers)
+      res = @handler.request(:proppatch, path, body, headers.merge(@headers))
       Nokogiri::XML.parse(res.body)
     end
 
@@ -603,7 +609,7 @@ module Net #:nodoc:
       '<d:lockinfo xmlns:d="DAV:">' +
          xml_snippet +
       '</d:lockinfo>'
-      res = @handler.request(:lock, path, body, headers)
+      res = @handler.request(:lock, path, body, headers.merge(@headers))
       Nokogiri::XML.parse(res.body)
     end
 
@@ -614,7 +620,7 @@ module Net #:nodoc:
     def unlock(path, locktoken)
      headers = {'Lock-Token' => '<'+locktoken+'>'}
      path = @uri.merge(path).path
-     res = @handler.request(:unlock, path, nil, headers)
+     res = @handler.request(:unlock, path, nil, headers.merge(@headers))
     end
 
     # Returns true if resource exists on server.
@@ -627,7 +633,7 @@ module Net #:nodoc:
       headers = {'Depth' => '1'}
       body = '<?xml version="1.0" encoding="utf-8"?><DAV:propfind xmlns:DAV="DAV:"><DAV:allprop/></DAV:propfind>'
       begin
-        res = @handler.request(:propfind, path, body, headers)
+        res = @handler.request(:propfind, path, body, headers.merge(@headers))
       rescue
         return false
       end
@@ -637,7 +643,7 @@ module Net #:nodoc:
     # Makes a new directory (collection)
     def mkdir(path)
       path = @uri.merge(path).path
-      res = @handler.request(:mkcol, path, nil, nil)
+      res = @handler.request(:mkcol, path, nil, @headers)
       res.body
     end
 
