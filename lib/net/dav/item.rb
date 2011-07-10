@@ -22,6 +22,10 @@ module Net
           @response./(".//x:getcontenttype", @namespaces).inner_text rescue nil
         end
 
+        def contentlength
+          @response./(".//x:getcontenttype", @namespaces).inner_text rescue nil
+        end
+
       end
 
       # URI of item
