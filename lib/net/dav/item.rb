@@ -2,6 +2,28 @@ module Net
   class DAV
     # Hold items found using Net::DAV#find
     class Item
+
+      # Hold <response> XML element and provides facilities to query attributes
+      class Props
+
+        # The <response> XML element
+        attr_reader :response
+
+        def initialize(response)
+          @response = response
+          @namespaces = {"x" => "DAV:"}
+        end
+
+        def displayname
+          @response./(".//x:displayname", @namespaces).inner_text
+        end
+
+        def contenttype
+          @response./(".//x:getcontenttype", @namespaces).inner_text
+        end
+
+      end
+
       # URI of item
       attr_reader :uri
 
