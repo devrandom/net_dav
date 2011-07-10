@@ -33,16 +33,20 @@ module Net
       # Type of item - :directory or :file
       attr_reader :type
 
+      # Properties holder
+      attr_reader :properties
+
       # Synonym for uri
       def url
         @uri
       end
 
-      def initialize(dav, uri, type, size) #:nodoc:
+      def initialize(dav, uri, type, size, properties) #:nodoc:
         @uri = uri
         @size = size.to_i rescue nil
         @type = type
         @dav = dav
+        @properties = Props.new(properties)
       end
 
       # Get content from server if needed and return as string
