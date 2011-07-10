@@ -19,7 +19,7 @@ module Net
         end
 
         def contenttype
-          @response./(".//x:getcontenttype", @namespaces).inner_text
+          @response./(".//x:getcontenttype", @namespaces).inner_text rescue nil
         end
 
       end
