@@ -26,6 +26,14 @@ module Net
           @response./(".//x:getcontenttype", @namespaces).inner_text rescue nil
         end
 
+        def creationdate
+          Time.parse(@response./(".//x:creationdate", @namespaces).inner_text)
+        end
+
+        def lastmodificationdate
+          Time.parse(@response./(".//x:getlastmodified", @namespaces).inner_text)
+        end
+
       end
 
       # URI of item
