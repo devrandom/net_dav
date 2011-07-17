@@ -462,7 +462,7 @@ module Net #:nodoc:
         uri = @uri.merge(item.xpath("x:href", namespaces).inner_text)
         size = item.%(".//x:getcontentlength", namespaces).inner_text rescue nil
         type = item.%(".//x:collection", namespaces) ? :directory : :file
-        res = Item.new(self, uri, type, size)
+        res = Item.new(self, uri, type, size, item)
         if type == :file then
 
           if(options[:filename])then
