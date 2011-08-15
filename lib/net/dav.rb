@@ -355,7 +355,7 @@ module Net #:nodoc:
       @uri = uri
       @uri = URI.parse(@uri) if @uri.is_a? String
       @handler = @have_curl ? CurlHandler.new(@uri) : NetHttpHandler.new(@uri)
-      @headers = options[:headers] rescue {}
+      @headers = options && options[:headers] ? options[:headers] : {}
     end
 
     # Opens the connection to the host.  Yields self to the block.
