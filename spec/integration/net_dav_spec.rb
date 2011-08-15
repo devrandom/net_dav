@@ -22,6 +22,13 @@ describe "Net::Dav" do
     @props.should match(/200 OK/)
   end
 
+  it "should store the HTTP status in @status" do
+    dav = Net::DAV.new("http://localhost:10080/")
+    @props = dav.propfind("/").to_s
+
+    dav.last_status.should == 207
+  end
+
   it "should raise if finding non-existent path" do
     dav = Net::DAV.new("http://localhost:10080/")
     lambda do
@@ -45,6 +52,7 @@ describe "Net::Dav" do
       @props.should match(/404.*Not found/i)
 
       dav.put_string("/new_file.html","File contents")
+      dav.last_status.should == 200
 
       @props = find_props_or_error(dav, "/new_file.html")
       @props.should match(/200 OK/i)
@@ -63,8 +71,11 @@ describe "Net::Dav" do
       @props.should match(/200 OK/i)
 
       dav.delete("/new_file.html")
+      dav.last_status.should == 204
+
       @props = find_props_or_error(dav, "/new_file.html")
       @props.should match(/404.*Not found/i)
+
     ensure
       if (find_props_or_error(dav, "/new_file.html") =~ /200/)
         dav.delete("/new_file.html")
@@ -80,6 +91,7 @@ describe "Net::Dav" do
       @props.should match(/200 OK/i)
 
       dav.copy("/file.html","/copied_file.html")
+      dav.last_status.should == 201
 
       @props = find_props_or_error(dav, "/copied_file.html")
       @props.should match(/200 OK/i)
@@ -102,6 +114,7 @@ describe "Net::Dav" do
     @props.should match(/200 OK/i)
 
     dav.move("/file.html","/moved_file.html")
+    dav.last_status.should == 201
     @props = find_props_or_error(dav, "/moved_file.html")
     @props.should match(/200 OK/i)
 
