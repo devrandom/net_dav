@@ -74,7 +74,7 @@ module Net #:nodoc:
         req.body_stream = stream
         req.content_length = length
         headers.each_pair { |key, value| req[key] = value } if headers
-        req.content_type = 'text/xml; charset="utf-8"'
+        req.content_type = 'application/octet-stream'
         res = handle_request(req, headers)
         res
       end
@@ -91,7 +91,7 @@ module Net #:nodoc:
           end
         req.body = body
         headers.each_pair { |key, value| req[key] = value } if headers
-        req.content_type = 'text/xml; charset="utf-8"'
+        req.content_type = 'application/octet-stream'
         res = handle_request(req, headers)
         res
       end
