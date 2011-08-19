@@ -128,7 +128,7 @@ module Net #:nodoc:
             Net::HTTP::Copy.new(path)
           when :proppatch
             Net::HTTP::Proppatch.new(path)
-	  when :lock
+          when :lock
             Net::HTTP::Lock.new(path)
           when :unlock
             Net::HTTP::Unlock.new(path)
@@ -145,6 +145,13 @@ module Net #:nodoc:
       def handle_request(req, headers, limit = MAX_REDIRECTS, &block)
         # You should choose better exception.
         raise ArgumentError, 'HTTP redirect too deep' if limit == 0
+
+        case @authorization
+        when :basic
+          req.basic_auth @user, @pass
+        when :digest
+          digest_auth(req, @user, @pass, response)
+        end
 
         response = nil
         if block
@@ -167,11 +174,11 @@ module Net #:nodoc:
             if disable_basic_auth
               raise "server requested basic auth, but that is disabled"
             end
-            new_req.basic_auth @user, @pass
+            @authorization = :basic
           else
-            digest_auth(new_req, @user, @pass, response)
+            @authorization = :digest
           end
-          return handle_request(new_req, headers, limit - 1, &block)
+          return handle_request(req, headers, limit - 1, &block)
         when Net::HTTPRedirection then
           location = URI.parse(response['location'])
           if (@uri.scheme != location.scheme ||
