@@ -13,10 +13,17 @@ module Net #:nodoc:
   # Implement a WebDAV client
   class DAV
     MAX_REDIRECTS = 10
+
+    def last_status
+      @handler.last_status
+    end
+
     class NetHttpHandler
       attr_writer :user, :pass
 
       attr_accessor :disable_basic_auth
+      attr_reader :last_status
+
 
       def verify_callback=(callback)
         @http.verify_callback = callback
@@ -156,6 +163,8 @@ module Net #:nodoc:
         else
           response = @http.request(req)
         end
+
+        @last_status = response.code.to_i
         case response
         when Net::HTTPSuccess     then
           return response
@@ -283,6 +292,9 @@ module Net #:nodoc:
           end
         end
         curl.perform
+
+        @last_status = curl.response_code
+
         unless curl.response_code >= 200 && curl.response_code < 300
           header_block = curl.header_str.split(/\r?\n\r?\n/)[-1]
           msg = header_block.split(/\r?\n/)[0]
@@ -348,6 +360,8 @@ module Net #:nodoc:
     # You can pass :curl => false if you want to disable use
     # of the curb (libcurl) gem if present for acceleration
     def initialize(uri, options = nil)
+      @last_status = 0
+
       @have_curl = Curl rescue nil
       if options && options.has_key?(:curl) && !options[:curl]
         @have_curl = false
