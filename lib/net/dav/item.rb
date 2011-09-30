@@ -23,7 +23,7 @@ module Net
         end
 
         def contentlength
-          @response./(".//x:getcontenttype", @namespaces).inner_text rescue nil
+          @response./(".//x:getcontentlength", @namespaces).inner_text rescue nil
         end
 
         def creationdate
