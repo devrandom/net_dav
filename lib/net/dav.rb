@@ -156,8 +156,6 @@ module Net #:nodoc:
         case @authorization
         when :basic
           req.basic_auth @user, @pass
-        when :digest
-          digest_auth(req, @user, @pass, response)
         end
 
         response = nil
@@ -186,6 +184,8 @@ module Net #:nodoc:
             @authorization = :basic
           else
             @authorization = :digest
+            # use the response from the failed request to build proper digest headers so we can try again
+             digest_auth(req, @user, @pass, response)
           end
           return handle_request(req, headers, limit - 1, &block)
         when Net::HTTPRedirection then
