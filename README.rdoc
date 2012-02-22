@@ -42,3 +42,8 @@ latter and you have +curb+ installed, you can disable its use by passing the
  :curl => false
 option to Net::DAV::start or Net::DAV::new .
 
+== Other
+
+Thanks go to Thomas ( https://github.com/thomasfl/ ) and others for their help.
+
+Thomas is writing the easy to use https://github.com/thomasfl/open-uri-and-write based on net_dav.
