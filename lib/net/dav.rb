@@ -179,7 +179,7 @@ module Net #:nodoc:
           response.error! unless @user
           response.error! if req['authorization']
           new_req = clone_req(req.path, req, headers)
-          if response['www-authenticate'] =~ /^Basic/
+          if response['www-authenticate'] =~ /^basic/i
             if disable_basic_auth
               raise "server requested basic auth, but that is disabled"
             end
