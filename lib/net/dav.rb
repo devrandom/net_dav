@@ -425,11 +425,20 @@ module Net #:nodoc:
     # how to retrieve access control properties.
     def propfind(path,*options)
       headers = {'Depth' => '1'}
-      if(options[0] == :acl)
-        body = '<?xml version="1.0" encoding="utf-8" ?><D:propfind xmlns:D="DAV:"><D:prop><D:owner/>' +
-                '<D:supported-privilege-set/><D:current-user-privilege-set/><D:acl/></D:prop></D:propfind>'
-      else
+      acl_body = '<?xml version="1.0" encoding="utf-8" ?><D:propfind xmlns:D="DAV:"><D:prop><D:owner/>' +
+              '<D:supported-privilege-set/><D:current-user-privilege-set/><D:acl/></D:prop></D:propfind>'
+      if options.size == 1
+        if (options[0] == :acl)
+          body = acl_body
+        else
+          body = options[0]
+        end
+      elsif options.size == 2
         body = options[0]
+        if options[1].is_a? Hash
+          opts = options[1]
+          headers['Depth'] = opts[:depth] if opts.include? :depth
+        end
       end
       if(!body)
         body = '<?xml version="1.0" encoding="utf-8"?><DAV:propfind xmlns:DAV="DAV:"><DAV:allprop/></DAV:propfind>'
