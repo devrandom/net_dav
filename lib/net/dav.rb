@@ -398,6 +398,10 @@ module Net #:nodoc:
     def credentials(user, pass)
       @handler.user = user
       @handler.pass = pass
+
+      # Return something explicitly since this command might be run in a
+      # console where the last statement would be printed.
+      nil
     end
 
     # Set extra headers for the dav request
