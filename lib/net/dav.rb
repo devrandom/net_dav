@@ -211,6 +211,7 @@ module Net #:nodoc:
         end
         new_req.content_length = req.content_length if req.content_length
         headers.each_pair { |key, value| new_req[key] = value } if headers
+        new_req.content_type = new_req.content_type if new_req.content_type
         return new_req
       end
 
