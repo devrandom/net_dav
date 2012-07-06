@@ -179,6 +179,7 @@ module Net #:nodoc:
         new_req.body = req.body if req.body
         new_req.body_stream = req.body_stream if req.body_stream
         headers.each_pair { |key, value| new_req[key] = value } if headers
+        new_req.content_type = new_req.content_type if new_req.content_type
         return new_req
       end
 
