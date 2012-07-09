@@ -251,6 +251,27 @@ module Net #:nodoc:
         header = header.join(', ')
         request['Authorization'] = header
       end
+      
+      def cert_file(cert_file)
+        # expects a OpenSSL::X509::Certificate object as client certificate
+        @http.cert  = OpenSSL::X509::Certificate.new(File.read(cert_file))
+        #puts @http.cert.not_after
+        #puts @http.cert.subject
+      end
+
+      def cert_key(cert_file, cert_file_password)
+        # expects a OpenSSL::PKey::RSA or OpenSSL::PKey::DSA object
+        if cert_file_password then
+          @http.key = OpenSSL::PKey::RSA.new(File.read(cert_file),cert_file_password)
+        else
+          @http.key = OpenSSL::PKey::RSA.new(File.read(cert_file))
+        end
+      end
+      
+      # path of a CA certification file in PEM format. The file can contain several CA certificates.
+      def ca_file(ca_file)
+        @http.ca_file  = ca_file
+      end
     end
 
 
@@ -310,6 +331,23 @@ module Net #:nodoc:
           raise Net::HTTPError.new(msg, nil)
         end
         curl.body_str
+      end
+      
+      def cert_file(cert_file)
+        # expects a cert file
+        @curl.cert = cert_file
+      end
+      
+      def cert_key(cert_file, cert_file_password)
+        if cert_file_password then
+          @curl.certpassword = cert_file_password
+        end
+        @curl.key = cert_key
+      end
+      
+      def ca_file(ca_file)
+        # path of a cacert bundle for this instance. This file will be used to validate SSL certificates.
+        @curl.cacert = ca_file
       end
 
     end
@@ -402,6 +440,22 @@ module Net #:nodoc:
 
       # Return something explicitly since this command might be run in a
       # console where the last statement would be printed.
+      nil
+    end
+    
+    # Set credentials for ssl certificate authentication
+    def ssl_certificate(cert_file, *cert_file_password)
+      @handler.cert_file(cert_file)
+      @handler.cert_key(cert_file, cert_file_password)
+    
+      # Return something explicitly since this command might be run in a
+      # console where the last statement would be printed.
+      nil
+    end
+    
+    # Set additional ssl authorities for ssl certificate authentication
+    def ssl_authority(ca_file)
+      @handler.ca_file(ca_file)
       nil
     end
 
