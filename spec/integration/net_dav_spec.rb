@@ -59,7 +59,7 @@ describe "Net::Dav" do
 
   it "should write files to webdav server" do
     @props = find_props_or_error(@dav, @new_file_uri)
-    @props.should match(/404.*Not found/i)
+    @props.should match(/200 OK/i)
 
     @dav.put_string(@new_file_uri,"File contents")
     @dav.last_status.should == 200
@@ -82,13 +82,12 @@ describe "Net::Dav" do
 
   end
 
-  # TODO: This test seems to assume file.html already exists on the server.
   it "should copy files on webdav server" do
     @props = find_props_or_error(@dav, "/file.html")
     @props.should match(/200 OK/i)
 
     @dav.copy("/file.html", @copied_file_uri)
-    dav.last_status.should == 201
+    @dav.last_status.should == 201
 
     @props = find_props_or_error(@dav, @copied_file_uri)
     @props.should match(/200 OK/i)
@@ -99,13 +98,12 @@ describe "Net::Dav" do
     @props.should match(/404.*Not found/i)
   end
 
-  # TODO: This test seems to assume file.html already exists on the server.
   it "should move files on webdav server" do
     @props = find_props_or_error(@dav, "/file.html")
     @props.should match(/200 OK/i)
 
     @dav.move("/file.html", @moved_file_uri)
-    dav.last_status.should == 201
+    @dav.last_status.should == 201
 
     @props = find_props_or_error(@dav,  @moved_file_uri)
     @props.should match(/200 OK/i)
