@@ -12,6 +12,7 @@ begin
     gem.authors = ["Miron Cuperman","Thomas Flemming"]
     gem.executables = ["dav"]
     gem.add_dependency "nokogiri", ">= 1.3.0"
+    gem.add_dependency "net-http-digest_auth", ">=1.2"
     gem.add_development_dependency "rspec", ">= 1.2.0"
     gem.add_development_dependency "webrick-webdav", ">= 1.0"
 

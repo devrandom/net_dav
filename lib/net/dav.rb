@@ -9,12 +9,6 @@ begin
 rescue LoadError
 end
 
-require 'rubygems'
-require 'uri'
-require 'net/http'
-require 'net/http/digest_auth'
-
-
 module Net #:nodoc:
   # Implement a WebDAV client
   class DAV
