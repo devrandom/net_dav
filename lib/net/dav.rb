@@ -157,7 +157,7 @@ module Net #:nodoc:
         when :basic
           req.basic_auth @user, @pass
         when :digest
-          digest_auth(req, @user, @pass, response)
+          digest_auth(req, @user, @pass, @http.request(req))
         end
 
         response = nil
