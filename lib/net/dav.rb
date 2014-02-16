@@ -611,10 +611,11 @@ module Net #:nodoc:
       res.body
     end
 
-    # Stores a file to a URL
+    # Stores a file specified with a local path to a URL
     #
     # Example:
     #   dav.put(url.path, file_path)
+    #
     def put(path, file_path)
       return false unless File.file?(file_path)
       path = @uri.merge(path).path
@@ -629,34 +630,35 @@ module Net #:nodoc:
     #
     # Example:
     #   dav.put(url.path, dir_path)
+    #
     def put_dir(path, dir_path)
       return false unless File.directory?(dir_path)
       response_arr = []
       path = @uri.merge(path).path
       target_prefix = File.basename(dir_path)
-      puts "Target path is: #{target_prefix}"
+      #puts "Target Prefix is: #{target_prefix}"
       src_prefix = File.dirname(dir_path)
-      puts "Source prefix is: #{src_prefix}"
+      #puts "Source prefix is: #{src_prefix}"
       dirs_to_traverse = [target_prefix]
       mkdir(target_prefix) unless exists?(target_prefix)
       until dirs_to_traverse.empty?
         current_dir = dirs_to_traverse.shift
-        puts "Processing DIR: #{current_dir}"
+        #puts "Processing DIR: #{current_dir}"
         Dir.entries("#{src_prefix}/#{current_dir}").each do |file|
           next if file == "."
           next if file == ".."
           remote_file = "#{current_dir}/#{file}"
           local_file = "#{src_prefix}/#{remote_file}"
-          puts "Processing File: #{local_file}"
+          #puts "Processing File: #{local_file}"
           if File.file?(local_file)
-            puts "Uploading file: #{file} to #{remote_file}"
+            #puts "Uploading file: #{file} to #{remote_file}"
             response_arr << put(remote_file, File.path(local_file))
           end
           if File.directory?(local_file)
             # Its a DIR
-            puts "It is a directory"
+            #puts "It is a directory"
             dir = remote_file
-            puts "Creating DIR: #{dir}"
+            #puts "Creating DIR: #{dir}"
             unless exists?(dir)
               response_arr << mkdir(dir) 
             end
@@ -664,10 +666,8 @@ module Net #:nodoc:
           end
         end
       end
-      return response_arr.join("\n")
+      return response_arr.select{|x| !x.empty?}.join("\n")
     end
-
-
 
     # Stores the content of a string to a URL
     #
