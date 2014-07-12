@@ -335,14 +335,16 @@ module Net #:nodoc:
       
       def cert_file(cert_file)
         # expects a cert file
+        super
         @curl.cert = cert_file
       end
       
       def cert_key(cert_file, cert_file_password)
+        super
         if cert_file_password then
           @curl.certpassword = cert_file_password
         end
-        @curl.key = cert_key
+        @curl.cert_key = cert_file
       end
       
       def ca_file(ca_file)
@@ -444,9 +446,9 @@ module Net #:nodoc:
     end
     
     # Set credentials for ssl certificate authentication
-    def ssl_certificate(cert_file, *cert_file_password)
+    def ssl_certificate(cert_file, cert_key, cert_file_password)
       @handler.cert_file(cert_file)
-      @handler.cert_key(cert_file, cert_file_password)
+      @handler.cert_key(cert_key, cert_file_password)
     
       # Return something explicitly since this command might be run in a
       # console where the last statement would be printed.

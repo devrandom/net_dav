@@ -26,9 +26,9 @@ end
 # http://blade.nagaokaut.ac.jp/cgi-bin/scat.rb/ruby/ruby-talk/223386
 # http://gmarrone.objectblues.net/cgi-bin/wiki/WebDAV_-_Linux_server%2c_Mac_OS_X_client
 module WEBrick
+  
   module HTTPServlet
     class WebDAVHandlerVersion2 < WebDAVHandler
-
       def do_OPTIONS(req, res)
         super
         res["DAV"] = "1,2"
@@ -37,11 +37,9 @@ module WEBrick
       def do_LOCK(req, res)
         res.body << "<XXX-#{Time.now.to_s}/>"
       end
-
     end
 
     class WebDAVHandlerVersion3 < WebDAVHandlerVersion2
-
       # Enable authentication
       $REALM = "WebDav share"
       $USER = "myuser"
@@ -55,22 +53,23 @@ module WEBrick
         }
         super
       end
-
     end
-
   end
+
 end
 
 def webdav_server(*options)
   port = 10080
+  
   if(options and options[0][:port])
     port = options[0][:port]
   end
+
   log = WEBrick::Log.new
   log.level = WEBrick::Log::DEBUG if $DEBUG
   serv = WEBrick::HTTPServer.new({:Port => port, :Logger => log})
-
-  dir = File.expand_path(File.dirname(__FILE__)) +  '/../fixtures'
+  dir = File.expand_path(File.dirname(__FILE__))
+  
   if(options and options[0][:authentication])
     serv.mount("/", WEBrick::HTTPServlet::WebDAVHandlerVersion3, dir)
   else
@@ -82,6 +81,5 @@ def webdav_server(*options)
 end
 
 if($0 ==  __FILE__)
-
   webdav_server(:port => 10080,:authentication => false)
 end
