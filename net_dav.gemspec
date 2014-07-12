@@ -31,10 +31,8 @@ Gem::Specification.new do |s|
      "net_dav.gemspec",
      "net_dav.gif",
      "script/multi-test",
-     "spec/fixtures/file.html",
      "spec/integration/net_dav_spec.rb",
      "spec/integration/webdav_server.rb",
-     "spec/spec.opts",
      "spec/spec_helper.rb",
      "tmp/.gitignore"
   ]
