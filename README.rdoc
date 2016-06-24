@@ -1,5 +1,8 @@
 Net::Dav library, in the style of Net::HTTP
 
+== NOTES:
+  This is a fork of net_dav 0.5.0 to include changes not on rubygems
+
 == Install
 
 Installing the gem:
