@@ -6,12 +6,12 @@ require 'net/dav/version'
 Gem::Specification.new do |spec|
   spec.name          = "net_dav"
   spec.version       = Net::DAV::VERSION
-  spec.authors       = ["Miron Cuperman", "Thomas Flemming", "Jacob Duffy"]
+  spec.authors       = ["Miron Cuperman", "Thomas Flemming"]
   spec.email         = ["c1.github@niftybox.net"]
 
   spec.summary       = "WebDAV client library in the style of Net::HTTP, using Net::HTTP and libcurl, if installed"
   spec.description   = "WebDAV client library in the style of Net::HTTP, using Net::HTTP and libcurl, if installed"
-  spec.homepage      = "https://github.com/duffyjp/net_dav"
+  spec.homepage      = "https://github.com/devrandom/net_dav"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.
