@@ -1,4 +1,4 @@
-Net::Dav library, in the style of Net::HTTP
+Net::Dav library, in the style of Net::HTTP {<img src="https://travis-ci.org/devrandom/net_dav.svg?branch=master" alt="Build Status" />}[https://travis-ci.org/devrandom/net_dav]
 
 == Install
 
