@@ -156,8 +156,12 @@ module Net #:nodoc:
         case @authorization
         when :basic
           req.basic_auth @user, @pass
-        when :digest
-          digest_auth(req, @user, @pass, response)
+        when :digest 
+          uri = @uri.merge(req.path)
+          uri.user = @user
+          uri.password = @pass
+          # re-calculate the digest header with the current uri path (and increment the nc)
+          req['Authorization'] = @digest_info.auth_header(uri, @lastServerDigestHeader, req.method)
         end
 
         response = nil
@@ -186,6 +190,9 @@ module Net #:nodoc:
             @authorization = :basic
           else
             @authorization = :digest
+            # Need to set up a new digest auth. 
+            # Either we never had one, or the server wants a fresh one calculated.
+            digest_auth(req, @user, @pass, response)
           end
           return handle_request(req, headers, limit - 1, &block)
         when Net::HTTPRedirection then
@@ -215,41 +222,19 @@ module Net #:nodoc:
         return new_req
       end
 
-      CNONCE = Digest::MD5.hexdigest("%x" % (Time.now.to_i + rand(65535))).slice(0, 8)
 
       def digest_auth(request, user, password, response)
-        # based on http://segment7.net/projects/ruby/snippets/digest_auth.rb
-        @nonce_count = 0 if @nonce_count.nil?
-        @nonce_count += 1
 
         raise "bad www-authenticate header" unless (response['www-authenticate'] =~ /^(\w+) (.*)/)
 
-        params = {}
-        $2.gsub(/(\w+)="(.*?)"/) { params[$1] = $2 }
+        @digest_info = Net::HTTP::DigestAuth.new
+        uri = @uri
+        uri.user = user
+        uri.password = password
+        request['Authorization'] = @digest_info.auth_header(uri, response['www-authenticate'], request.method)
 
-        a_1 = "#{user}:#{params['realm']}:#{password}"
-        a_2 = "#{request.method}:#{request.path}"
-        request_digest = ''
-        request_digest << Digest::MD5.hexdigest(a_1)
-        request_digest << ':' << params['nonce']
-        request_digest << ':' << ('%08x' % @nonce_count)
-        request_digest << ':' << CNONCE
-        request_digest << ':' << params['qop']
-        request_digest << ':' << Digest::MD5.hexdigest(a_2)
-
-        header = []
-        header << "Digest username=\"#{user}\""
-        header << "realm=\"#{params['realm']}\""
-        header << "nonce=\"#{params['nonce']}\""
-        header << "uri=\"#{request.path}\""
-        header << "cnonce=\"#{CNONCE}\""
-        header << "nc=#{'%08x' % @nonce_count}"
-        header << "qop=#{params['qop']}"
-        header << "response=\"#{Digest::MD5.hexdigest(request_digest)}\""
-        header << "algorithm=\"MD5\""
-
-        header = header.join(', ')
-        request['Authorization'] = header
+        # Keep this around so that we can send subsequent requests without hitting HTTPUnauthorized again.
+        @lastServerDigestHeader = response['www-authenticate']
       end
       
       def cert_file(cert_file)
