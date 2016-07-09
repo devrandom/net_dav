@@ -1,9 +1,11 @@
 require 'net/https'
 require 'uri'
 require 'nokogiri'
-require 'net/dav/item'
+require File.dirname(__FILE__) + "/dav/item"
 require 'base64'
 require 'digest/md5'
+require File.dirname(__FILE__) + "/dav/version"
+
 begin
   require 'curb'
 rescue LoadError
