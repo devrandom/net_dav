@@ -63,11 +63,11 @@ module Net #:nodoc:
       end
 
       def open_timeout
-        @http.read_timeout
+        @http.open_timeout
       end
 
       def open_timeout=(sec)
-        @http.read_timeout = sec
+        @http.open_timeout = sec
       end
 
       def request_sending_stream(verb, path, stream, length, headers)
