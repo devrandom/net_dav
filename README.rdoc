@@ -15,10 +15,10 @@ http://wiki.github.com/tenderlove/nokogiri/what-to-do-if-libxml2-is-being-a-jerk
 
 == Usage
   require 'net/dav'
-  
-  Net::DAV.start("https://localhost.localdomain/xyz/") { |dav|
-    find('.', :recursive => true) do | item |
-       item.content = item.content.gsub(/silly/i, "funny")
+
+  Net::DAV.start("https://localhost.localdomain/xyz/") do |dav|
+    dav.find('.', :recursive => true) do |item|
+      item.content = item.content.gsub(/silly/i, 'funny')
     end
   end
 
