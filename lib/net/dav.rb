@@ -192,6 +192,12 @@ module Net #:nodoc:
           return handle_request(req, headers, limit - 1, &block)
         when Net::HTTPRedirection then
           location = URI.parse(response['location'])
+
+          # Support relative redirects, where they are of the format of /blah/
+          location.scheme ||= @uri.scheme
+          location.host ||= @uri.host
+          location.port ||= @uri.port
+
           if (@uri.scheme != location.scheme ||
               @uri.host != location.host ||
               @uri.port != location.port)
