@@ -295,6 +295,7 @@ module Net #:nodoc:
         unless @curl
           @curl = Curl::Easy.new
           @curl.timeout = @http.read_timeout
+          @curl.connect_timeout = @http.open_timeout
           @curl.follow_location = true
           @curl.max_redirects = MAX_REDIRECTS
           if disable_basic_auth
